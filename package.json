@@ -1,0 +1,89 @@
+{
+  "name": "xiaoke-ftp",
+  "productName": "小柯機器人FTP助手",
+  "version": "1.0.0",
+  "description": "小柯機器人FTP助手：FTP／FTPS／SFTP／WebDAV 雙窗格檔案管理、傳輸佇列（續傳、限速、資料夾）、站台管理、區網分享、語音說明、自動更新",
+  "main": "src/main/main.js",
+  "author": {
+    "name": "吳玉柱",
+    "email": "achir1015@gmail.com"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/",
+    "icon": "python scripts/make_icon.py",
+    "dist:win": "electron-builder --win nsis --x64 --publish never && electron-builder --win portable --x64 --publish never",
+    "dist:mac": "electron-builder --mac dmg --publish never",
+    "e2e": "node e2e/smoke.mjs"
+  },
+  "dependencies": {
+    "basic-ftp": "^6.2.3",
+    "qrcode": "^1.5.4",
+    "ssh2": "^1.17.0"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
+    "ftp-srv": "^4.6.3",
+    "playwright-core": "^1.64.1",
+    "webdav-server": "^2.6.3"
+  },
+  "build": {
+    "appId": "com.achir.xiaokeftp",
+    "productName": "小柯機器人FTP助手",
+    "artifactName": "XiaokeFTP-${version}-${os}-${arch}.${ext}",
+    "copyright": "Copyright © 2026 吳玉柱",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**/*",
+      "build/icon.png",
+      "package.json",
+      "node_modules/**/*",
+      "!node_modules/**/test/**",
+      "!node_modules/**/*.map",
+      "!node_modules/**/*.d.ts",
+      "!node_modules/**/*.md",
+      "!e2e/**",
+      "!test/**",
+      "!scripts/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "executableName": "XiaokeFTP"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "小柯機器人FTP助手",
+      "uninstallDisplayName": "小柯機器人FTP助手",
+      "language": "1028",
+      "installerLanguages": [
+        "zh_TW"
+      ],
+      "include": "build/installer.nsh"
+    },
+    "portable": {
+      "artifactName": "XiaokeFTP-${version}-win-x64-portable.${ext}"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.png",
+      "category": "public.app-category.utilities",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "identity": "-"
+    },
+    "dmg": {
+      "title": "小柯機器人FTP助手 ${version}"
+    },
+    "npmRebuild": false
+  }
+}
