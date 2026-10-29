@@ -32,7 +32,8 @@ fs.writeFileSync(path.join(env.root, '網站', 'index.html'), '<h1>hi</h1>');
 fs.writeFileSync(path.join(env.root, '網站', '下載我.zip'), Buffer.alloc(500000, 5));
 
 const profile = 'e2e';
-const userData = path.join(process.env.APPDATA, 'xiaoke-ftp-' + profile);
+const appData = process.platform === 'win32' ? process.env.APPDATA : process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support') : path.join(os.homedir(), '.config');
+const userData = path.join(appData, 'xiaoke-ftp-' + profile);
 fs.rmSync(userData, { recursive: true, force: true });
 fs.mkdirSync(userData, { recursive: true });
 fs.writeFileSync(path.join(userData, 'settings.json'), JSON.stringify({ localPath: L, layout: { split: 0.5, queueH: 220, sidebarW: 230 } }));
@@ -84,7 +85,7 @@ try {
 
   console.log('上傳：選取後按「上傳」');
   await win.locator('#paneLocal .row', { hasText: '報告.txt' }).click();
-  await win.locator('#paneLocal .row', { hasText: '相簿' }).click({ modifiers: ['Control'] });
+  await win.locator('#paneLocal .row', { hasText: '相簿' }).click({ modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'] });
   await win.locator('#paneLocal .tb.go').click();
   ok(await until(() => fs.existsSync(path.join(env.root, '相簿', '2026', '照片.jpg')) && fs.existsSync(path.join(env.root, '報告.txt'))), '檔案與整個資料夾上傳成功');
   ok(await until(() => win.locator('#paneRemote .row .nm', { hasText: '報告.txt' }).count()), '上傳後遠端清單自動更新');

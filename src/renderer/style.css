@@ -125,15 +125,15 @@ body.ready #app { opacity: 1; }
 .list-wrap.drop-on { box-shadow: inset 0 0 0 3px var(--ok); background: var(--ok-soft); }
 .list { min-height: 100%; outline: none; }
 .list-wrap { container-type: inline-size; }
-.list-head, .row { display: grid; grid-template-columns: minmax(140px, 1fr) 80px 76px 124px; align-items: center; }
-.side-remote .list-head, .side-remote .row { grid-template-columns: minmax(140px, 1fr) 80px 76px 124px 84px 90px; }
+.list-head, .row { display: grid; grid-template-columns: minmax(140px, 1fr) 80px 76px 138px; align-items: center; }
+.side-remote .list-head, .side-remote .row { grid-template-columns: minmax(140px, 1fr) 80px 76px 138px 84px 90px; }
 /* 窗格窄的時候把次要欄位收起來，避免左右捲動 */
 @container (max-width: 640px) {
-  .side-remote .list-head, .side-remote .row { grid-template-columns: minmax(140px, 1fr) 80px 124px 84px; }
+  .side-remote .list-head, .side-remote .row { grid-template-columns: minmax(140px, 1fr) 80px 138px 84px; }
   .side-remote .c-kind, .side-remote .c-owner { display: none; }
 }
 @container (max-width: 470px) {
-  .list-head, .row, .side-remote .list-head, .side-remote .row { grid-template-columns: minmax(120px, 1fr) 76px 120px; }
+  .list-head, .row, .side-remote .list-head, .side-remote .row { grid-template-columns: minmax(120px, 1fr) 76px 134px; }
   .c-kind, .c-perm, .c-owner { display: none; }
 }
 .list-head { position: sticky; top: 0; z-index: 2; background: var(--panel2); border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--muted); user-select: none; }

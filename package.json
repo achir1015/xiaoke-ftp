@@ -11,7 +11,7 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "icon": "python scripts/make_icon.py",
     "dist:win": "electron-builder --win nsis --x64 --publish never && electron-builder --win portable --x64 --publish never",
     "dist:mac": "electron-builder --mac dmg --publish never",
