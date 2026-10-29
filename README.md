@@ -1,4 +1,5 @@
 # 小柯機器人FTP助手
+<img width="1919" height="1077" alt="image" src="https://github.com/user-attachments/assets/45140b26-3dd0-4c41-8823-8ed64031a0dd" />
 
 <img src="build/icon.png" width="128" align="right" alt="圖示">
 
