@@ -213,7 +213,9 @@ const relay = {
     const t = Date.now();
     let told = false;
     for (;;) {
-      try { const r = await fetch(http, { cache: 'no-store' }); if (r.ok) return r.json(); } catch {}
+      let r = null;
+      try { r = await fetch(http, { cache: 'no-store' }); if (r.ok) return r.json(); } catch {}
+      if (r && r.status === 404) throw err('找不到轉接伺服器：Render 上還沒建立，或網址不對（設定 → 線上版轉接伺服器）');
       if (!told && Date.now() - t > 2500) { told = true; emit('log', { t: Date.now(), src: '線上版', line: '正在喚醒轉接伺服器（免費主機閒置會休眠，約需 30～60 秒）…' }); emit('relay', { waking: true }); }
       if (Date.now() - t > 90000) throw err('連不上轉接伺服器，請稍後再試（或到設定確認轉接伺服器網址）');
       await sleep(2000);
@@ -356,6 +358,9 @@ async function dispatch(m, a) {
   switch (m) {
     case 'r.open': {
       const site = { ...a[0] };
+      // 雲端的轉接伺服器連不進家裡／公司的區域網路
+      const local = /^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)|\.local$|^localhost$/i.test(site.host || '');
+      if (local && !/^wss?:\/\/(127\.0\.0\.1|localhost)/.test(relay.url())) throw err(`「${site.host}」是區域網路（家裡或公司內部）的位址，線上版經由雲端轉接伺服器，連不進區域網路。請改用電腦版或手機 App；或改填這台主機對外的網址（網域名稱或外部 IP）。`);
       const key = `xkftp.hostkey.${site.host}:${site.port}`;
       site.knownHostKey = localStorage.getItem(key) || '';
       const r = await relay.call('r.open', [site]);

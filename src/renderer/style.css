@@ -109,7 +109,7 @@ body.ready #app { opacity: 1; }
 .rtab .x { border: none; background: none; cursor: pointer; color: var(--muted); border-radius: 4px; padding: 0 4px; }
 .rtab .x:hover { background: var(--bad-soft); color: var(--bad); }
 .rtab.add { border: none; background: none; font-size: 16px; color: var(--muted); padding: 0 10px; margin-top: 7px; }
-.remote-body { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; }
+.remote-body { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; overflow: hidden; }
 .remote-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--panel) 80%, transparent); font-size: 16px; color: var(--brand); z-index: 3; }
 .pane-view { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .pane-tools { display: flex; align-items: center; gap: 1px; padding: 5px 8px 3px; flex: none; flex-wrap: nowrap; overflow: hidden; }
@@ -166,7 +166,7 @@ body.ready #app { opacity: 1; }
 .pane-status { flex: none; padding: 3px 10px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line2); background: var(--panel2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drag-ghost { position: fixed; top: -100px; left: 0; padding: 4px 10px; background: var(--brand); color: #fff; border-radius: 6px; font-size: 13px; }
 
-.welcome { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; padding: 20px; color: var(--muted); }
+.welcome { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; padding: 20px; color: var(--muted); }
 .welcome h2 { margin: 6px 0 0; color: var(--text); font-size: 19px; }
 .welcome .wbtns { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
 
