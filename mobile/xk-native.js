@@ -5,7 +5,8 @@
   'use strict';
   const AND = window.XiaokeAndroid;
   const IOS = window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.xkf;
-  if (!AND && !IOS) return;
+  const WEB = !AND && !IOS && window.XiaokeWebBackend; // 線上版：web/xk-web.js
+  if (!AND && !IOS && !WEB) return;
 
   // ---------------- 原生呼叫 ----------------
   let seq = 1;
@@ -18,6 +19,7 @@
     else { const e = new Error((r && r.error) || '發生未知錯誤'); e.raw = r && r.raw; p.rej(e); }
   };
   function call(method, ...args) {
+    if (WEB) return WEB.call(method, args);
     return new Promise((res, rej) => {
       const id = 'n' + seq++;
       pend.set(id, { res, rej });
@@ -46,7 +48,7 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const lsGet = (k, d) => { try { const v = localStorage.getItem('xkftp.' + k); return v ? JSON.parse(v) : d; } catch { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem('xkftp.' + k, JSON.stringify(v)); } catch {} };
-  const appInfo = AND ? JSON.parse(AND.appInfo()) : (window.XiaokeIOS && window.XiaokeIOS.info) || { platform: 'ios', version: '0' };
+  const appInfo = AND ? JSON.parse(AND.appInfo()) : WEB ? WEB.info : (window.XiaokeIOS && window.XiaokeIOS.info) || { platform: 'ios', version: '0' };
 
   // ---------------- 設定 ----------------
   function defaults() {
@@ -434,7 +436,7 @@
   let ttsSeq = 1;
   const ttsWait = new Map();
   window.__xkTtsDone = (id) => { const f = ttsWait.get(id); if (f) { ttsWait.delete(id); f(); } };
-  const tts = AND ? {
+  const tts = WEB ? undefined : AND ? {
     available: () => AND.ttsAvailable(),
     voiceName: () => AND.ttsVoice(),
     speak: (text, rate) => new Promise((r) => { const id = 'v' + ttsSeq++; ttsWait.set(id, r); AND.ttsSpeak(text, rate || 1, id); }),
@@ -449,12 +451,14 @@
   // ---------------- window.xk ----------------
   let updInfo = null;
   window.xk = {
-    mobile: true,
+    mobile: !WEB,
+    web: !!WEB,
+    relay: WEB ? { info: WEB.relayInfo, forgetPassword: WEB.forgetPassword } : undefined,
     tts,
     settings: { get: async () => getSettings(), set: async (p) => setSettings(p) },
-    sys: { info: async () => ({ platform: appInfo.platform, arch: '', version: appInfo.version, packaged: true, profile: '', mobile: true, model: appInfo.model || '' }) },
+    sys: { info: async () => ({ platform: appInfo.platform, arch: '', version: appInfo.version, packaged: true, profile: '', mobile: !WEB, web: !!WEB, model: appInfo.model || '' }) },
     openExternal: (url) => call('openUrl', url),
-    pathForFile: () => '',
+    pathForFile: (f) => (WEB ? WEB.pathForFile(f) : ''),
     sites: {
       list: async () => sites().map(publicSite),
       save: (s) => saveSite(s),
@@ -489,6 +493,9 @@
       newFile: (sid, p) => call('r.newFile', sess(sid).cid, p),
       close: async (sid) => { const s = sessions.get(sid); if (s) { sessions.delete(sid); call('r.close', s.cid); } return true; },
       edit: async () => { throw new Error('手機版暫不支援線上編輯，請先下載再用其他 App 開啟'); },
+      // 線上版：在網頁裡直接編輯文字檔
+      readText: (sid, p) => call('r.readText', sess(sid).cid, p),
+      writeText: (sid, p, text) => call('r.writeText', sess(sid).cid, p, text),
     },
     local: {
       list: (p) => call('l.list', p),
@@ -501,7 +508,7 @@
       reveal: (p) => call('l.share', p),
       exists: async (p) => !!p && !!(await call('l.stat', p)),
       // iPhone／iPad：從「檔案」或「照片」匯入（Android 直接瀏覽整個手機，不需要）
-      import: IOS ? (dir, kind) => call('l.import', dir, kind) : undefined,
+      import: IOS || WEB ? (dir, kind) => call('l.import', dir, kind) : undefined,
       writeText: (p, text) => call('l.writeText', p, text),
     },
     dialog: { pickFolder: (title, def) => picker(title || '選擇資料夾', def, false), pickFiles: async (title) => { const p = await picker(title || '選擇檔案', '', true); return p ? [p] : []; } },

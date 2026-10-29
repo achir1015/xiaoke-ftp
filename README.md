@@ -22,10 +22,19 @@ https://github.com/user-attachments/assets/32699b96-3edc-4047-ae67-24b03e51dae6
 | Mac（Intel） | `XiaokeFTP-版本-mac-x64.dmg` |
 | Android 手機（8 以上） | `XiaokeFTP-版本-android.apk` |
 | iPad／iPhone | 用 Safari 開 [安裝頁](https://achir1015.github.io/xiaoke-ftp/ios/)（限已登記的裝置） |
+| 線上版（免安裝） | 用瀏覽器打開 https://achir1015.github.io/xiaoke-ftp/ |
 
 裝好之後程式會自動檢查新版本，按一下就能更新。
 
 **Android**：第一次安裝要允許「安裝不明應用程式」；開啟後請允許「所有檔案存取權」，才能讀寫手機裡的檔案。手機版暫不提供線上編輯與區網分享。
+
+## 線上版
+
+打開 https://achir1015.github.io/xiaoke-ftp/ 就能用，畫面和功能和電腦版相同（區網分享除外；「編輯」改成在網頁裡直接修改文字檔）。
+
+- **本機檔案**：Chrome／Edge 可以按左上角小房子 →「選擇電腦裡的資料夾」；其他瀏覽器使用「瀏覽器暫存區」。
+- **連線**：瀏覽器不能直接連 FTP／SFTP，所以經由轉接伺服器（`server/`，部署在 Render 免費方案，用存取密碼保護）。第一次連線會詢問轉接伺服器密碼；免費主機閒置 15 分鐘會休眠，喚醒約需 30～60 秒。
+- **自己架轉接伺服器**：`XKFTP_PASSWORD=密碼 node server/index.js`，再到線上版「設定 → 線上版轉接伺服器」填網址。
 
 ## 功能
 
@@ -47,6 +56,8 @@ npm start          # 執行開發版
 npm test           # 單元測試（本機 FTP／FTPS／SFTP／WebDAV 測試伺服器）
 npm run e2e        # 介面自動測試
 npm run dist:win   # 打包 Windows 安裝檔與免安裝版
+npm run web        # 產生線上版網站到 docs/（GitHub Pages）
+node e2e/web.mjs   # 線上版測試（本機轉接伺服器＋Chrome，29 項）
 python android/build.py           # 打包 Android APK（需要 JDK 17、Android SDK；不用 Gradle）
 python android/build.py debug install   # 除錯版裝到手機，可跑 node e2e/phone.mjs 實機測試
 ```

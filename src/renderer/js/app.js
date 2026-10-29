@@ -27,7 +27,7 @@ function localCrumbs(p) {
   // 手機：根目錄（Android 的 /storage/emulated/0、iPhone 的「文件」）顯示成「手機」或「我的檔案」
   const R = S.localRoot;
   if (R && (p === R.path || p.startsWith(R.path + '/'))) { const parts = p.slice(R.path.length).split('/').filter(Boolean); return [{ name: R.name, path: R.path }, ...parts.map((x, i) => ({ name: x, path: R.path + '/' + parts.slice(0, i + 1).join('/') }))]; }
-  if (SEP === '/') { const parts = p.split('/').filter(Boolean); return [{ name: '/', path: '/' }, ...parts.map((x, i) => ({ name: x, path: '/' + parts.slice(0, i + 1).join('/') }))]; }
+  if (SEP === '/') { const parts = p.split('/').filter(Boolean); return [{ name: xk.web ? '本機' : '/', path: '/' }, ...parts.map((x, i) => ({ name: x, path: '/' + parts.slice(0, i + 1).join('/') }))]; }
   const parts = p.split('\\').filter(Boolean);
   return parts.map((x, i) => ({ name: x, path: i === 0 ? x + '\\' : parts.slice(0, i + 1).join('\\') }));
 }
@@ -49,18 +49,20 @@ function makeLocalPane() {
       const b = h('button', { class: 'tb import', title: '從「檔案」或「照片」匯入', onclick: (e) => {
         const r = e.currentTarget.getBoundingClientRect();
         const run = async (kind) => { try { const n = await xk.local.import(pane.path, kind); if (n) { toast(`已匯入 ${n} 個檔案`, 'ok'); pane.refresh(); } } catch (er) { toast('匯入失敗：' + er.message, 'error'); } };
+        if (xk.web) return run('files'); // 線上版：直接開檔案選擇
         contextMenu(r.left, r.bottom + 2, [{ text: '從「照片」匯入', icon: icon('plus'), onClick: () => run('photos') }, { text: '從「檔案」匯入', icon: icon('open'), onClick: () => run('files') }]);
       } });
-      b.innerHTML = icon('plus') + '<span>匯入</span>';
+      b.innerHTML = icon('plus') + `<span>${xk.web ? '加入檔案' : '匯入'}</span>`;
       return [b];
     } : null,
     menuExtra: (items) => {
       const one = items.length === 1 ? items[0] : null;
       return [
-        one && !xk.mobile ? { text: '在檔案總管中顯示', icon: icon('open'), onClick: () => xk.local.reveal(one.path) } : null,
+        one && !xk.mobile && !xk.web ? { text: '在檔案總管中顯示', icon: icon('open'), onClick: () => xk.local.reveal(one.path) } : null,
+        one && xk.web && !isDir(one) ? { text: '存到電腦（下載）', icon: icon('download'), onClick: () => xk.local.reveal(one.path).catch((e) => toast(e.message, 'error')) } : null,
         one && xk.mobile && !isDir(one) ? { text: '分享到其他 App', icon: icon('share'), onClick: () => xk.local.reveal(one.path).catch((e) => toast(e.message, 'error')) } : null,
         one && !isDir(one) ? { text: '計算校驗和', icon: icon('hash'), onClick: () => hashDialog(one.path) } : null,
-        one && isDir(one) && !xk.mobile ? { text: '用區網分享這個資料夾', icon: icon('share'), onClick: () => shareDialog({ ...S.settings, share: { ...S.settings.share, dir: one.path } }).then(refreshShare) } : null,
+        one && isDir(one) && !xk.mobile && !xk.web ? { text: '用區網分享這個資料夾', icon: icon('share'), onClick: () => shareDialog({ ...S.settings, share: { ...S.settings.share, dir: one.path } }).then(refreshShare) } : null,
       ];
     },
   }, { showHidden: S.settings.showHidden, touch: !!xk.mobile });
@@ -97,7 +99,7 @@ function makeRemotePane(tab) {
     menuExtra: (items) => {
       const one = items.length === 1 ? items[0] : null;
       return [
-        one && !isDir(one) && !xk.mobile ? { text: '編輯（存檔後自動上傳）', icon: icon('edit'), onClick: () => editRemote(tab, one) } : null,
+        one && !isDir(one) && !xk.mobile ? { text: xk.web ? '編輯（在網頁中修改文字檔）' : '編輯（存檔後自動上傳）', icon: icon('edit'), onClick: () => editRemote(tab, one) } : null,
         items.length ? { text: '下載到其他資料夾…', icon: icon('download'), onClick: async () => { const d = await xk.dialog.pickFolder('下載到哪個資料夾？', S.local.path); if (d) download(items, d); } } : null,
         one && /^(ftp|ftps|ftps-implicit|sftp)$/.test(p) ? { text: '權限…', icon: icon('chmod'), onClick: async () => { const m = await chmodDialog(one); if (m != null) { try { await xk.remote.chmod(tab.sid, one.path, m); toast('已修改權限', 'ok'); tab.pane.refresh(); } catch (e) { toast('修改權限失敗：' + e.message, 'error'); } } } } : null,
         one ? { text: '複製網址', icon: icon('link'), onClick: () => { navigator.clipboard.writeText(`${p.replace('-implicit', '')}://${tab.host}${one.path}`); toast('已複製'); } } : null,
@@ -230,11 +232,25 @@ async function download(items, localDir, tab = activeTab()) {
 }
 
 async function editRemote(tab, it) {
+  if (xk.web) return webEditor(tab, it);
   try {
     toast(`正在打開「${it.name}」…`, 'info', 2000);
     await xk.remote.edit(tab.sid, it.path);
     toast(`已用預設程式打開「${it.name}」，存檔後會自動上傳`, 'ok', 5000);
   } catch (e) { toast('無法編輯：' + e.message, 'error', 5000); }
+}
+
+// 線上版：在網頁裡直接編輯遠端的文字檔
+async function webEditor(tab, it) {
+  let text;
+  try { toast(`正在讀取「${it.name}」…`, 'info', 1500); text = await xk.remote.readText(tab.sid, it.path); } catch (e) { return toast('無法編輯：' + e.message, 'error', 5000); }
+  const ta = h('textarea', { class: 'editor', spellcheck: 'false' });
+  ta.value = text;
+  const r = await modal({ title: `編輯：${it.name}`, body: ta, wide: true, cls: 'editor-modal', dismissable: true,
+    buttons: [{ text: '取消', value: null }, { text: '存檔並上傳', kind: 'primary', onClick: async () => {
+      try { await xk.remote.writeText(tab.sid, it.path, ta.value); toast(`已存檔並上傳「${it.name}」`, 'ok'); tab.pane.refresh(); return true; } catch (e) { toast('上傳失敗：' + e.message, 'error', 5000); return false; }
+    } }] }).done;
+  void r;
 }
 
 // 檔案已存在：一個一個問
@@ -416,7 +432,10 @@ async function main() {
   [S.settings, S.info] = await Promise.all([xk.settings.get(), xk.sys.info()]);
   applyTheme();
   voice.configure(S.settings.voice);
-  if (xk.mobile) (await import('./mobile.js')).setupMobile(S, { refreshLocal: () => S.local && S.local.refresh() });
+  if (xk.web) document.documentElement.classList.add('web');
+  // 手機 App，或線上版用手機瀏覽器打開（畫面窄）時，用手機版面
+  if (xk.mobile || (xk.web && innerWidth < 820)) (await import('./mobile.js')).setupMobile(S, { refreshLocal: () => S.local && S.local.refresh() });
+  if (xk.web) { const lt = $('#paneLocal .pane-title b'); if (lt) lt.textContent = '本機（電腦資料夾／瀏覽器暫存區）'; }
   $('#sbVer').textContent = `v${S.info.version}`;
 
   S.local = makeLocalPane();

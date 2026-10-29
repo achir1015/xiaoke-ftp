@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="小柯機器人FTP助手線上版：在瀏覽器裡管理 FTP、FTPS、SFTP、WebDAV 的檔案">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: wss: ws://127.0.0.1:* http://127.0.0.1:* ws://localhost:* http://localhost:*">
+<title>小柯機器人FTP助手・線上版</title>
+<link rel="icon" href="img/logo64.png">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="mobile.css">
+<script src="js/xk-web.js"></script>
+<script src="js/xk-native.js"></script>
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand"><img src="img/logo64.png" alt="" width="34" height="34"><b>小柯機器人FTP助手</b></div>
+    <form id="quick" class="quick" autocomplete="off">
+      <select id="qProto" title="協定"></select>
+      <input id="qHost" placeholder="主機（例如 ftp.example.com）" spellcheck="false">
+      <input id="qUser" placeholder="帳號" spellcheck="false">
+      <input id="qPass" type="password" placeholder="密碼">
+      <input id="qPort" type="number" placeholder="埠" min="1" max="65535">
+      <button class="btn primary" id="qGo" type="submit"><span class="ic-slot" data-ic="bolt"></span>快速連線</button>
+    </form>
+    <nav class="top-actions">
+      <button class="tbtn" id="btnGuide" title="使用說明（F1）"><span class="ic-slot" data-ic="speaker"></span>說明</button>
+      <button class="tbtn" id="btnShare" title="區網分享"><span class="ic-slot" data-ic="share"></span>區網分享</button>
+      <button class="tbtn" id="btnHash" title="校驗和"><span class="ic-slot" data-ic="hash"></span>校驗和</button>
+      <button class="tbtn" id="btnSettings" title="設定"><span class="ic-slot" data-ic="gear"></span>設定</button>
+      <button class="tbtn" id="btnUpdate" title="版本更新"><span class="ic-slot" data-ic="update"></span>更新<i class="dot"></i></button>
+      <button class="tbtn" id="btnAbout" title="關於"><span class="ic-slot" data-ic="info"></span></button>
+    </nav>
+  </header>
+
+  <div class="body">
+    <aside id="sidebar">
+      <div class="side-head">
+        <b>站台</b>
+        <button class="tb" id="btnAddSite" title="新增站台"><span class="ic-slot" data-ic="plus"></span></button>
+      </div>
+      <input id="siteFilter" class="side-filter" placeholder="搜尋站台…" spellcheck="false">
+      <div id="siteList" class="site-list"></div>
+      <div class="side-foot">
+        <button class="mini" id="btnImport" title="匯入站台清單">匯入</button>
+        <button class="mini" id="btnExport" title="匯出站台清單（不含密碼）">匯出</button>
+      </div>
+    </aside>
+    <div class="vsplit" id="splitSide"></div>
+
+    <main class="work">
+      <div class="panes" id="panes">
+        <section class="pane" id="paneLocal">
+          <div class="pane-title"><span class="ic-slot" data-ic="home"></span><b>本機（這台電腦）</b></div>
+        </section>
+        <div class="vsplit" id="splitPanes"></div>
+        <section class="pane" id="paneRemote">
+          <div class="pane-title tabs" id="remoteTabs"></div>
+          <div class="remote-body" id="remoteBody"></div>
+        </section>
+      </div>
+      <div class="hsplit" id="splitQueue"></div>
+      <section id="queuePanel"></section>
+    </main>
+  </div>
+
+  <footer class="statusbar">
+    <span id="sbDown" class="sb down">↓ —</span>
+    <span id="sbUp" class="sb up">↑ —</span>
+    <span id="sbQueue" class="sb"></span>
+    <span class="sb grow"></span>
+    <span id="sbShare" class="sb share"></span>
+    <span id="sbVer" class="sb ver"></span>
+  </footer>
+</div>
+<div id="modals"></div>
+<div id="toasts"></div>
+</body>
+</html>

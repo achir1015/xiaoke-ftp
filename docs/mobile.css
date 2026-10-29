@@ -1,0 +1,115 @@
+/* 手機／平板版面（html.mobile）。桌面版不會套用 */
+html.mobile, html.mobile body { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+html.mobile body { font-size: 15px; }
+html.mobile #app { grid-template-rows: 52px 1fr 58px; height: 100dvh; }
+html.mobile .statusbar { display: none; }
+html.mobile .topbar { gap: 6px; padding: 0 6px; }
+html.mobile .brand { gap: 6px; font-size: 15px; flex: 1; min-width: 0; }
+html.mobile .brand img { width: 30px; height: 30px; }
+html.mobile .top-actions { gap: 0; }
+html.mobile .tbtn { font-size: 0; gap: 0; padding: 0 8px; height: 40px; }
+html.mobile .tbtn .ic { width: 21px; height: 21px; }
+html.mobile #btnShare, html.mobile #btnHash { display: none; }
+html.mobile .menu-btn { height: 40px; min-width: 40px; }
+html.mobile .menu-btn .ic { width: 22px; height: 22px; }
+
+/* 抽屜：站台＋快速連線 */
+html.mobile .body { grid-template-columns: 1fr; }
+html.mobile #splitSide, html.mobile #splitPanes, html.mobile #splitQueue { display: none; }
+html.mobile #sidebar { position: fixed; z-index: 40; left: 0; top: 0; bottom: 0; width: min(86vw, 360px); transform: translateX(-102%); transition: transform .22s; box-shadow: var(--shadow); padding-top: env(safe-area-inset-top); }
+body.drawer-on #sidebar { transform: none; }
+.drawer-shade { display: none; }
+body.drawer-on .drawer-shade { display: block; position: fixed; inset: 0; z-index: 39; background: rgba(10, 20, 40, .35); }
+.drawer-quick { padding: 12px; border-bottom: 1px solid var(--line2); }
+.drawer-quick b { display: block; margin-bottom: 8px; }
+html.mobile .drawer-quick .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+html.mobile .drawer-quick .quick > * { width: 100%; min-width: 0; height: 40px; }
+html.mobile .drawer-quick #qHost { grid-column: 1 / -1; }
+html.mobile .drawer-quick .quick select { width: 100%; }
+html.mobile .drawer-quick #qPort { width: 100%; }
+html.mobile .drawer-quick .btn { grid-column: 1 / -1; justify-content: center; }
+html.mobile .site { padding: 10px 8px; }
+
+/* 一次一個畫面 */
+html.mobile .work { grid-template-rows: 1fr; }
+html.mobile .panes { display: block; position: relative; }
+html.mobile .pane { position: absolute; inset: 0; }
+html.mobile #queuePanel { display: none; }
+body[data-view=local] #paneRemote, body[data-view=remote] #paneLocal { display: none; }
+body[data-view=queue] .panes { display: none; }
+body[data-view=queue] #queuePanel { display: flex; }
+/* 平板橫放：兩個窗格並排 */
+html.mobile.wide .panes { display: flex; }
+html.mobile.wide .pane { position: static; display: flex !important; }
+html.mobile.wide body[data-view=queue] .panes { display: none; }
+
+.bottom-nav { display: flex; background: var(--panel); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+.bottom-nav button { flex: 1; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: none; background: none; color: var(--muted); font-size: 12.5px; }
+.bottom-nav button .ic { width: 23px; height: 23px; }
+.bottom-nav button.on { color: var(--brand); font-weight: 600; }
+.bottom-nav .badge-n { display: none; position: absolute; top: 5px; left: calc(50% + 8px); background: var(--bad); color: #fff; font-style: normal; font-size: 11px; border-radius: 9px; padding: 0 5px; min-width: 18px; }
+
+/* 窗格 */
+html.mobile .pane-title { height: 40px; }
+html.mobile .pane-tools { overflow-x: auto; gap: 2px; padding: 4px 6px; scrollbar-width: none; }
+html.mobile .pane-tools::-webkit-scrollbar { display: none; }
+html.mobile .tb { height: 38px; min-width: 38px; }
+html.mobile .tb .ic { width: 20px; height: 20px; }
+html.mobile .tb.go { padding: 0 12px; flex: none; }
+html.mobile .tb.import { flex: none; padding: 0 8px; gap: 3px; color: var(--brand); font-weight: 600; }
+/* 手機用返回鍵就能回上一頁，省下空間給「上傳／下載」 */
+html.mobile .pane-tools .tb[data-act=back], html.mobile .pane-tools .tb[data-act=fwd], html.mobile .pane-tools .tb[data-act=newfile], html.mobile .pane-tools .tsep { display: none; }
+html.mobile .path-bar { padding: 2px 6px 6px; }
+html.mobile .crumbs, html.mobile .path-input, html.mobile .filter-input { height: 36px; }
+html.mobile .filter-input { width: 84px; }
+html.mobile .list-head, html.mobile .row,
+html.mobile .side-remote .list-head, html.mobile .side-remote .row { grid-template-columns: minmax(0, 1fr) 118px; }
+html.mobile .c-kind, html.mobile .c-perm, html.mobile .c-owner { display: none !important; }
+html.mobile .list-head .c-mtime { display: none; }
+html.mobile .row { height: 54px; grid-template-rows: 1fr 1fr; }
+html.mobile .row .c-name { grid-row: 1 / 3; font-size: 15px; gap: 10px; }
+html.mobile .row .c-name .fi { width: 26px; height: 26px; }
+html.mobile .row .c-size { grid-column: 2; grid-row: 1; align-self: end; }
+html.mobile .row .c-mtime { grid-column: 2; grid-row: 2; align-self: start; font-size: 11px; text-align: right; padding-left: 0; text-overflow: clip; }
+html.mobile .row:hover { background: none; }
+html.mobile .row.sel { background: var(--sel); }
+html.mobile .row.sel .c-name::before { content: "✔"; color: var(--brand); font-weight: 700; margin-right: -4px; }
+html.mobile .pane-status { font-size: 12px; }
+
+/* 傳輸 */
+html.mobile .q-head { flex-wrap: wrap; }
+html.mobile .q-tools { overflow-x: auto; width: 100%; }
+html.mobile .q-row { grid-template-columns: 30px minmax(0, 1fr) 110px; height: auto; min-height: 56px; padding: 6px 0; row-gap: 4px; }
+html.mobile .q-size, html.mobile .q-eta { display: none; }
+html.mobile .q-prog { grid-column: 2; grid-row: 2; }
+html.mobile .q-speed { grid-column: 3; grid-row: 2; }
+html.mobile .q-st { grid-column: 3; grid-row: 1; justify-content: flex-end; white-space: normal; }
+html.mobile .q-log { font-size: 11.5px; }
+
+/* 對話框 */
+html.mobile .modal-back { padding: 8px; align-items: flex-end; }
+html.mobile .modal, html.mobile .modal.wide, html.mobile .modal.guide-modal { width: 100%; max-height: calc(100dvh - 16px); border-radius: 14px; }
+html.mobile .grid2, html.mobile .grid3, html.mobile .grid-host { grid-template-columns: 1fr; }
+html.mobile .modal-foot { flex-wrap: wrap; }
+html.mobile .modal-foot .btn { flex: 1; justify-content: center; min-height: 42px; }
+html.mobile .modal-foot .left { flex-basis: 100%; margin: 0; }
+html.mobile input, html.mobile select, html.mobile textarea { font-size: 16px; min-height: 40px; }
+html.mobile .chk input { width: 20px; height: 20px; min-height: 0; }
+html.mobile .guide { grid-template-columns: 1fr; min-height: 0; }
+html.mobile .g-list { flex-direction: row; overflow-x: auto; max-height: none; padding-bottom: 4px; }
+html.mobile .g-item { flex: none; white-space: nowrap; }
+html.mobile .guide-art { max-height: 150px; }
+html.mobile .g-text p { font-size: 15px; }
+html.mobile .about { flex-direction: column; align-items: center; text-align: center; }
+html.mobile .first { flex-direction: column; text-align: center; }
+html.mobile .welcome img { width: 110px; height: 110px; }
+html.mobile #toasts { left: 12px; right: 12px; bottom: 70px; align-items: stretch; }
+html.mobile .toast { max-width: none; }
+html.mobile .ctx { min-width: 220px; }
+html.mobile .ctx .item { padding: 11px 12px; }
+
+/* 簡易檔案選擇器 */
+.picker .pk-path { font-size: 13px; color: var(--muted); word-break: break-all; margin-bottom: 8px; }
+.picker .pk-list { display: flex; flex-direction: column; gap: 2px; max-height: 55vh; overflow: auto; }
+.picker .pk-row { text-align: left; border: none; background: var(--panel2); padding: 12px; border-radius: 8px; }
+.picker .pk-row.up { color: var(--brand); }

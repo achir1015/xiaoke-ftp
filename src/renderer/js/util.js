@@ -50,7 +50,8 @@ export const rparent = (p) => { if (!p || p === '/') return '/'; const s = p.rep
 export const rbase = (p) => p.replace(/\/+$/, '').split('/').pop();
 
 // 本機路徑（Windows 用 \）
-export const SEP = navigator.userAgent.includes('Windows') ? '\\' : '/';
+// 線上版（瀏覽器）的本機路徑一律用 /
+export const SEP = navigator.userAgent.includes('Windows') && !window.XiaokeWebBackend ? '\\' : '/';
 export const ljoin = (a, b) => (a.endsWith(SEP) ? a : a + SEP) + b;
 export function lparent(p) {
   if (SEP === '\\') {

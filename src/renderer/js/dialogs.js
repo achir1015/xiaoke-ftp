@@ -162,16 +162,28 @@ export async function settingsDialog(settings) {
     h('label', { class: 'chk' }, el.voiceOn, '開啟語音說明'),
     h('label', { class: 'chk' }, el.voiceNotify, '傳輸完成、連線成功時用語音提醒'),
     h('div', { class: 'grid2' }, field('聲音', el.voiceName), field('語速', h('div', { class: 'inrow' }, el.voiceRate, rateLbl, testVoice))),
-    h('h4', {}, '更新'),
-    h('label', { class: 'chk' }, el.autoUpdate, '啟動時自動檢查新版本'));
+    window.xk.web ? relaySection(s) : h('h4', {}, '更新'),
+    window.xk.web ? null : h('label', { class: 'chk' }, el.autoUpdate, '啟動時自動檢查新版本'));
   const r = await modal({ title: '設定', body, wide: true, buttons: [{ text: '取消', value: null }, { text: '儲存', kind: 'primary', default: true, value: true }] }).done;
   if (!r) { voice.configure(s.voice); return null; }
+  const relayUrl = body.querySelector('#relayUrl');
   return {
+    ...(relayUrl ? { relayUrl: relayUrl.value.trim() } : {}),
     maxConcurrent: Number(el.maxConcurrent.value) || 3, limitDown: Math.max(0, Number(el.limitDown.value) || 0), limitUp: Math.max(0, Number(el.limitUp.value) || 0),
     retries: Math.max(0, Number(el.retries.value) || 0), onExists: el.onExists.value, keepMtime: el.keepMtime.checked, showHidden: el.showHidden.checked,
     confirmDelete: el.confirmDelete.checked, theme: el.theme.value, autoUpdate: el.autoUpdate.checked,
     voice: { enabled: el.voiceOn.checked, notify: el.voiceNotify.checked, name: el.voiceName.value, rate: Number(el.voiceRate.value) || 1 },
   };
+}
+
+// 線上版：轉接伺服器設定
+function relaySection(s) {
+  const info = window.xk.relay.info();
+  const url = h('input', { id: 'relayUrl', value: s.relayUrl || '', placeholder: info.url, spellcheck: 'false' });
+  const forget = h('button', { class: 'mini', type: 'button', onclick: () => { window.xk.relay.forgetPassword(); toast('已清除，下次連線會重新詢問密碼'); } }, '清除已記住的密碼');
+  return h('div', {}, h('h4', {}, '線上版轉接伺服器'),
+    h('p', { class: 'hint' }, '瀏覽器不能直接連 FTP／SFTP，線上版經由轉接伺服器連線。一般不用改；自己架設時才填網址。'),
+    field('轉接伺服器網址', url, `留空＝使用預設（${info.url}）`), h('div', { class: 'inrow' }, forget));
 }
 
 // ---------------- 區網分享 ----------------

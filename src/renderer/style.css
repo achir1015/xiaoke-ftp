@@ -16,6 +16,10 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+/* 線上版：沒有區網分享 */
+html.web #btnShare { display: none; }
+.editor { width: 100%; min-height: 55vh; font: 13.5px/1.5 Consolas, "Microsoft JhengHei UI", monospace; resize: vertical; white-space: pre; }
+.modal.editor-modal { width: 960px; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font: 14px/1.45 var(--font); }
 body.dragging { cursor: col-resize; user-select: none; }
 button, input, select, textarea { font: inherit; color: inherit; }
