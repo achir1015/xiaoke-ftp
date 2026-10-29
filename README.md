@@ -2,6 +2,8 @@
 <img width="1919" height="1077" alt="image" src="https://github.com/user-attachments/assets/77e78593-1ae6-46d9-ad4e-7df0e10e6311" />
 媒體示範
 
+https://github.com/user-attachments/assets/32699b96-3edc-4047-ae67-24b03e51dae6
+
 <img src="build/icon.png" width="128" align="right" alt="圖示">
 
 一般人也能輕鬆上手的 FTP／SFTP／WebDAV 檔案管理工具。左邊是自己的電腦、右邊是遠端主機，把檔案拖過去就能上傳、拖回來就能下載；還有小柯機器人用語音一步一步教您怎麼用。
