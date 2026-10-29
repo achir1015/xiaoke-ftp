@@ -51,8 +51,8 @@ export class Pane extends Emitter {
     );
     const go = h('button', { class: `tb go ${side === 'local' ? 'up' : 'down'}`, 'data-act': 'transfer', title: side === 'local' ? '把選取的檔案上傳到右邊的遠端資料夾' : '把選取的檔案下載到左邊的本機資料夾', onclick: () => this.transferSel() });
     go.innerHTML = icon(side === 'local' ? 'upload' : 'download') + `<span>${side === 'local' ? '上傳' : '下載'}</span>`;
-    tb.append(go);
     if (this.a.extraTools) tb.append(...this.a.extraTools(this));
+    tb.append(go);
 
     // 路徑列
     this.pathInput = h('input', { class: 'path-input', spellcheck: 'false', title: '輸入路徑後按 Enter', onkeydown: (e) => { if (e.key === 'Enter') { this.go(this.pathInput.value.trim()); this.listEl.focus(); } if (e.key === 'Escape') { this.pathInput.value = this.path; this.listEl.focus(); } } });

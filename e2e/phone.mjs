@@ -13,7 +13,7 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { startAll } = require('./servers.js');
 const ADB = process.env.ADB || 'E:/小米觸控音箱/tools/android-sdk/platform-tools/adb.exe';
 const PKG = 'com.achir.xiaokeftp';
-const BASE = 35000;
+const BASE = 41000; // 手機上 35022 之類的埠可能被其他 App 占用
 const PHONE_DIR = '/storage/emulated/0/Download/xkftp-e2e';
 
 const adb = (...a) => execFileSync(ADB, a, { encoding: 'utf8' });
@@ -33,6 +33,7 @@ console.log('準備手機');
 const ports = [BASE, BASE + 100, BASE + 200, BASE + 300];
 for (let p = BASE + 10; p <= BASE + 60; p++) ports.push(p);
 for (let p = BASE + 110; p <= BASE + 160; p++) ports.push(p);
+try { adb('reverse', '--remove-all'); } catch {}
 for (const p of ports) adb('reverse', `tcp:${p}`, `tcp:${p}`);
 // 測試檔案
 const tmp = fs.mkdtempSync(path.join(ROOT, 'e2e', 'out', 'phone-'));

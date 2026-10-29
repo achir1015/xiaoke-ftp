@@ -68,7 +68,7 @@ export function setupMobile(S, { refreshLocal }) {
     if (v !== 'local') { setView('local'); return true; }
     return false;
   };
-  const isRoot = (pane) => pane.side === 'local' && /^\/storage\/emulated\/0\/?$/.test(pane.path);
+  const isRoot = (pane) => pane.side === 'local' && S.localRoot && pane.path === S.localRoot.path;
 
   // 檔案存取權（Android 11 以上要使用者在設定畫面打開「所有檔案存取權」）
   async function checkPerm(ask) {

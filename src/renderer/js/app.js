@@ -24,9 +24,9 @@ function fillIcons(root = document) { for (const el of $$('.ic-slot', root)) { e
 
 // ---------------- 本機窗格 ----------------
 function localCrumbs(p) {
-  // 手機：/storage/emulated/0 顯示成「手機」
-  const m = xk.mobile && /^(\/storage\/emulated\/0)(\/.*)?$/.exec(p);
-  if (m) { const parts = (m[2] || '').split('/').filter(Boolean); return [{ name: '手機', path: m[1] }, ...parts.map((x, i) => ({ name: x, path: m[1] + '/' + parts.slice(0, i + 1).join('/') }))]; }
+  // 手機：根目錄（Android 的 /storage/emulated/0、iPhone 的「文件」）顯示成「手機」或「我的檔案」
+  const R = S.localRoot;
+  if (R && (p === R.path || p.startsWith(R.path + '/'))) { const parts = p.slice(R.path.length).split('/').filter(Boolean); return [{ name: R.name, path: R.path }, ...parts.map((x, i) => ({ name: x, path: R.path + '/' + parts.slice(0, i + 1).join('/') }))]; }
   if (SEP === '/') { const parts = p.split('/').filter(Boolean); return [{ name: '/', path: '/' }, ...parts.map((x, i) => ({ name: x, path: '/' + parts.slice(0, i + 1).join('/') }))]; }
   const parts = p.split('\\').filter(Boolean);
   return parts.map((x, i) => ({ name: x, path: i === 0 ? x + '\\' : parts.slice(0, i + 1).join('\\') }));
@@ -36,7 +36,7 @@ function makeLocalPane() {
   const pane = new Pane({
     side: 'local',
     list: (p) => xk.local.list(p),
-    parent: lparent, basename: lbase, join: ljoin, crumbs: localCrumbs,
+    parent: (p) => (S.localRoot && p === S.localRoot.path ? null : lparent(p)), basename: lbase, join: ljoin, crumbs: localCrumbs,
     places: () => xk.local.places(),
     mkdir: (p) => xk.local.mkdir(p),
     newFile: (p) => xk.local.newFile(p),
@@ -44,6 +44,16 @@ function makeLocalPane() {
     delete: (items) => xk.local.delete(items.map((x) => x.path)),
     open: (it) => xk.local.open(it.path).catch((e) => toast(e.message, 'error')),
     confirmDelete: () => S.settings.confirmDelete !== false,
+    // iPhone／iPad：從「檔案」或「照片」匯入到目前的資料夾
+    extraTools: xk.local.import ? (pane) => {
+      const b = h('button', { class: 'tb import', title: '從「檔案」或「照片」匯入', onclick: (e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        const run = async (kind) => { try { const n = await xk.local.import(pane.path, kind); if (n) { toast(`已匯入 ${n} 個檔案`, 'ok'); pane.refresh(); } } catch (er) { toast('匯入失敗：' + er.message, 'error'); } };
+        contextMenu(r.left, r.bottom + 2, [{ text: '從「照片」匯入', icon: icon('plus'), onClick: () => run('photos') }, { text: '從「檔案」匯入', icon: icon('open'), onClick: () => run('files') }]);
+      } });
+      b.innerHTML = icon('plus') + '<span>匯入</span>';
+      return [b];
+    } : null,
     menuExtra: (items) => {
       const one = items.length === 1 ? items[0] : null;
       return [
@@ -412,6 +422,7 @@ async function main() {
   S.local = makeLocalPane();
   const startLocal = (await xk.local.exists(S.settings.localPath)) ? S.settings.localPath : null;
   const pl = await xk.local.places();
+  if (pl.root) S.localRoot = pl.root;
   await S.local.go(startLocal || pl.home || pl.places[pl.places.length - 1].path);
 
   S.queue = new QueuePanel($('#queuePanel'), { onAsk: (t) => { askQ.unshift(t); nextAsk(); } });

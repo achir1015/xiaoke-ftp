@@ -241,6 +241,9 @@ final class Net {
         JSONObject o = new JSONObject();
         o.put("places", p); o.put("drives", d);
         o.put("home", new File(root, Environment.DIRECTORY_DOWNLOADS).getAbsolutePath());
+        JSONObject rt = new JSONObject();
+        rt.put("name", "手機"); rt.put("path", root.getAbsolutePath());
+        o.put("root", rt);
         return o;
     }
 
