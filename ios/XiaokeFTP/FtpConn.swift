@@ -248,7 +248,8 @@ final class FtpConn: Conn {
                 break
             }
             let text = String(data: raw, encoding: .utf8) ?? String(decoding: raw, as: UTF8.self)
-            return text.split(whereSeparator: { $0 == "\n" || $0 == "\r" }).compactMap { useM ? Self.parseMLSD(String($0)) : Self.parseLIST(String($0)) }
+            // Swift 把 "\r\n" 當成「一個」字元，一定要用 isNewline 判斷，否則整份清單會黏成一行
+            return text.split(whereSeparator: { $0.isNewline }).compactMap { useM ? Self.parseMLSD(String($0)) : Self.parseLIST(String($0)) }
                 .filter { ($0["name"] as? String).map { $0 != "." && $0 != ".." && !$0.isEmpty } ?? false }
         }
     }
