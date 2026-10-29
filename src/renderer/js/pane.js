@@ -13,7 +13,7 @@ const COLS = {
 
 export class Pane extends Emitter {
   // adapter: { side, list(path), parent(path), join(dir,name), mkdir, newFile, rename, delete(items), open(item), menuExtra(items), places() }
-  constructor(adapter, { showHidden = true } = {}) {
+  constructor(adapter, { showHidden = true, touch = false } = {}) {
     super();
     this.a = adapter;
     this.side = adapter.side;
@@ -26,6 +26,7 @@ export class Pane extends Emitter {
     this.filter = '';
     this.back = []; this.fwd = [];
     this.showHidden = showHidden;
+    this.touch = touch; // 手機：點一下資料夾就進入、點檔案切換選取、長按開選單
     this.loading = false;
     this.build();
   }
@@ -48,7 +49,7 @@ export class Pane extends Emitter {
       btn('del', side === 'local' ? '刪除（移到資源回收筒）' : '刪除（Delete）', () => this.deleteSel(), 'danger'),
       h('span', { class: 'tsep' }),
     );
-    const go = h('button', { class: `tb go ${side === 'local' ? 'up' : 'down'}`, 'data-act': 'transfer', title: side === 'local' ? '把選取的檔案上傳到右邊的遠端資料夾' : '把選取的檔案下載到左邊的本機資料夾', onclick: () => this.emit('transfer', this.selected()) });
+    const go = h('button', { class: `tb go ${side === 'local' ? 'up' : 'down'}`, 'data-act': 'transfer', title: side === 'local' ? '把選取的檔案上傳到右邊的遠端資料夾' : '把選取的檔案下載到左邊的本機資料夾', onclick: () => this.transferSel() });
     go.innerHTML = icon(side === 'local' ? 'upload' : 'download') + `<span>${side === 'local' ? '上傳' : '下載'}</span>`;
     tb.append(go);
     if (this.a.extraTools) tb.append(...this.a.extraTools(this));
@@ -130,7 +131,7 @@ export class Pane extends Emitter {
       const r = document.createElement('div');
       r.className = 'row' + (this.sel.has(it.name) ? ' sel' : '') + (it.name.startsWith('.') ? ' hidden' : '');
       r.dataset.i = i;
-      r.draggable = true;
+      r.draggable = !this.touch;
       const k = kindOf(it);
       r.innerHTML = `<div class="c c-name">${fileIcon(it)}<span class="nm">${esc(it.name)}</span></div>`
         + `<div class="c c-size">${isDir(it) ? '' : human(it.size)}</div>`
@@ -161,6 +162,13 @@ export class Pane extends Emitter {
       if (i >= 0) r.classList.toggle('sel', this.sel.has(this.view[i].name));
     }
     this.updateStatus();
+  }
+
+  // 手機：送出傳輸後清除選取，下一次點選才不會混在一起
+  transferSel() {
+    const items = this.selected();
+    this.emit('transfer', items);
+    if (this.touch && items.length) { this.sel.clear(); this.syncSel(); }
   }
 
   selected() { return this.view.filter((x) => this.sel.has(x.name)).map((x) => ({ ...x, path: this.a.join(this.path, x.name) })); }
@@ -257,8 +265,9 @@ export class Pane extends Emitter {
     const one = items.length === 1 ? items[0] : null;
     const other = this.side === 'local' ? '上傳到遠端' : '下載到本機';
     contextMenu(e.clientX, e.clientY, [
-      one && isDir(one) ? { text: '開啟', icon: icon('open'), onClick: () => this.open(one), key: 'Enter' } : null,
-      items.length ? { text: other, icon: icon(this.side === 'local' ? 'upload' : 'download'), onClick: () => this.emit('transfer', items) } : null,
+      one && (isDir(one) || this.touch) ? { text: '開啟', icon: icon('open'), onClick: () => this.open(one), key: this.touch ? '' : 'Enter' } : null,
+      this.touch ? { text: this.sel.size ? '取消選取' : '全選', icon: icon('check'), onClick: () => { this.sel = this.sel.size ? new Set() : new Set(this.view.map((x) => x.name)); this.syncSel(); } } : null,
+      items.length ? { text: other, icon: icon(this.side === 'local' ? 'upload' : 'download'), onClick: () => this.transferSel() } : null,
       ...(this.a.menuExtra ? this.a.menuExtra(items, this) : []),
       '-',
       { text: '新增資料夾', icon: icon('newdir'), onClick: () => this.newFolder() },
@@ -278,6 +287,7 @@ export class Pane extends Emitter {
     const itemOf = (r) => (r && +r.dataset.i >= 0 ? this.view[+r.dataset.i] : null);
 
     L.addEventListener('mousedown', (e) => {
+      if (this.touch) return;
       const r = rowOf(e);
       if (!r) { if (e.button === 0 && !e.target.closest('.list-head')) { this.sel.clear(); this.syncSel(); } return; }
       const it = itemOf(r);
@@ -297,17 +307,34 @@ export class Pane extends Emitter {
     });
     L.addEventListener('click', (e) => {
       const r = rowOf(e);
+      if (this.touch) {
+        if (!r) return;
+        if (r.classList.contains('up')) return this.goUp();
+        const it = itemOf(r);
+        if (!it) return;
+        if (isDir(it) && !this.sel.size) return this.open(it);
+        if (this.sel.has(it.name)) this.sel.delete(it.name); else this.sel.add(it.name);
+        this.anchor = it.name;
+        return this.syncSel();
+      }
       if (this._clickSingle && r && itemOf(r) && itemOf(r).name === this._clickSingle && !e.ctrlKey && !e.shiftKey) { this.sel = new Set([this._clickSingle]); this.anchor = this._clickSingle; this.syncSel(); }
       this._clickSingle = null;
     });
     L.addEventListener('dblclick', (e) => {
+      if (this.touch) return;
       const r = rowOf(e);
       if (!r) return;
       if (r.classList.contains('up')) return this.goUp();
       const it = itemOf(r);
       if (it) this.open(it);
     });
-    L.addEventListener('contextmenu', (e) => { e.preventDefault(); this.menu(e); });
+    L.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      // 手機長按：還沒選取的項目先選起來
+      const it = this.touch && itemOf(rowOf(e));
+      if (it && !this.sel.has(it.name)) { this.sel.add(it.name); this.anchor = it.name; this.syncSel(); }
+      this.menu(e);
+    });
     L.addEventListener('keydown', (e) => this.onKey(e));
 
     // 拖曳：從這裡拖出去

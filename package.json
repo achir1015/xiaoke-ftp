@@ -1,7 +1,7 @@
 {
   "name": "xiaoke-ftp",
   "productName": "小柯機器人FTP助手",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "小柯機器人FTP助手：FTP／FTPS／SFTP／WebDAV 雙窗格檔案管理、傳輸佇列（續傳、限速、資料夾）、站台管理、區網分享、語音說明、自動更新",
   "main": "src/main/main.js",
   "author": {
@@ -11,11 +11,13 @@
   "license": "MIT",
   "scripts": {
     "start": "electron .",
-    "test": "node --test test/*.test.js",
+    "test": "node --test test/drivers.test.js test/transfer.test.js",
     "icon": "python scripts/make_icon.py",
     "dist:win": "electron-builder --win nsis --x64 --publish never && electron-builder --win portable --x64 --publish never",
     "dist:mac": "electron-builder --mac dmg --publish never",
-    "e2e": "node e2e/smoke.mjs"
+    "e2e": "node e2e/smoke.mjs",
+    "mobile": "node scripts/build-mobile.mjs",
+    "android": "python android/build.py"
   },
   "dependencies": {
     "basic-ftp": "^6.2.3",
@@ -49,7 +51,9 @@
       "!node_modules/**/*.md",
       "!e2e/**",
       "!test/**",
-      "!scripts/**"
+      "!scripts/**",
+      "!mobile/**",
+      "!android/**"
     ],
     "win": {
       "target": "nsis",

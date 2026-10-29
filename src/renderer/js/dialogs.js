@@ -274,12 +274,12 @@ export async function updateDialog(pre) {
   const go = h('button', { class: 'btn primary' }, '下載並安裝');
   go.onclick = async () => {
     go.disabled = true;
-    const off = window.xk.update.onProgress((p) => { prog.firstChild.style.width = (p.total ? (p.got / p.total) * 100 : 50) + '%'; msg.textContent = `下載中 ${human(p.got)}${p.total ? ' / ' + human(p.total) : ''}`; });
+    const off = window.xk.update.onProgress((p) => { prog.firstChild.style.width = (p.total ? (p.got / p.total) * 100 : 50) + '%'; msg.textContent = window.xk.mobile ? `下載中 ${p.got}%` : `下載中 ${human(p.got)}${p.total ? ' / ' + human(p.total) : ''}`; });
     try {
       const file = await window.xk.update.download();
       msg.textContent = '下載完成，正在安裝，程式會自動重新開啟…';
       const r = await window.xk.update.install(file);
-      if (r && r.manual) msg.textContent = '已打開安裝檔，請依畫面完成安裝。';
+      if (r && r.manual) msg.textContent = window.xk.mobile ? '已打開安裝畫面，請按「安裝」（或「更新」）。' : '已打開安裝檔，請依畫面完成安裝。';
     } catch (e) { msg.textContent = '✘ ' + e.message; go.disabled = false; }
     off();
   };
@@ -296,7 +296,7 @@ export function aboutDialog(info) {
       h('p', {}, `版本 v${info.version}（${info.platform === 'win32' ? 'Windows' : info.platform === 'darwin' ? 'macOS' : info.platform} ${info.arch}）`),
       h('p', {}, '開發：吳玉柱 先生 與 Claude AI Opus 5.5'),
       h('p', { class: 'hint' }, '支援 FTP、FTPS、SFTP、WebDAV 的雙窗格檔案管理工具：拖放上傳下載、續傳、限速、站台管理、線上編輯、區網分享、校驗和、語音說明。介面設計參考 FileCentipede 的檔案瀏覽器理念，程式完全自行撰寫。'),
-      h('p', { class: 'hint' }, '使用的開放原始碼套件：Electron、basic-ftp、ssh2、qrcode（皆為 MIT 授權）。'),
+      h('p', { class: 'hint' }, '使用的開放原始碼套件：Electron、basic-ftp、ssh2、qrcode（皆為 MIT 授權）；Android 版另使用 Apache Commons Net（Apache 2.0）、JSch（BSD）。'),
       h('p', {}, h('a', { href: '#', onclick: (e) => { e.preventDefault(); window.xk.openExternal('https://github.com/achir1015/xiaoke-ftp'); } }, 'GitHub：achir1015/xiaoke-ftp'))));
   return modal({ title: '關於', body, buttons: [{ text: '關閉', kind: 'primary', value: true, default: true }] }).done;
 }

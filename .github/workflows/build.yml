@@ -1,9 +1,9 @@
-name: 建置安裝檔（Windows / macOS）
+name: 建置安裝檔（Windows / macOS / Android）
 
 on:
   push:
     branches: [main]
-    paths: ['package.json', 'src/**', 'build/**', '.github/workflows/build.yml']
+    paths: ['package.json', 'src/**', 'build/**', 'android/**', 'mobile/**', 'scripts/build-mobile.mjs', '.github/workflows/build.yml']
   workflow_dispatch:
 
 permissions:
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: npm ci --ignore-scripts
-      - run: node --test test/*.test.js
+      - run: npm test
 
   build:
     needs: test
@@ -53,8 +53,47 @@ jobs:
             dist/*.dmg
           if-no-files-found: error
 
+  android:
+    name: Android（APK）
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      # 簽章憑證的 SHA-256（公開資訊）：每次都要用同一把金鑰，手機上的 App 才能直接更新
+      CERT_SHA256: 85a7563c2cdc09b8c0465e6f09819fd9ae59253c2a66c83ad2aa16710291c52f
+      KS: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: 沒有簽章金鑰 Secret 時略過（改由本機建置後上傳）
+        if: env.KS == ''
+        run: echo "::notice::缺少 ANDROID_KEYSTORE_B64 Secret，略過 Android 建置"
+      - uses: actions/setup-node@v4
+        if: env.KS != ''
+        with: { node-version: 20 }
+      - uses: actions/setup-java@v4
+        if: env.KS != ''
+        with: { distribution: temurin, java-version: '17' }
+      - name: 建置 APK
+        if: env.KS != ''
+        run: |
+          echo "$KS" | base64 -d > android/xiaokeftp.jks
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+          VER=$(node -p "require('./package.json').version")
+          python3 android/build.py
+          mv android/build/XiaokeFTP.apk "XiaokeFTP-$VER-android.apk"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          FP=$("$BT/apksigner" verify --print-certs "XiaokeFTP-$VER-android.apk" | grep -m1 "SHA-256 digest" | awk '{print $NF}')
+          [ "$FP" = "$CERT_SHA256" ] || { echo "::error::APK 簽章和手機上的 App 不一樣（$FP），裝了會無法更新"; exit 1; }
+          rm -f android/xiaokeftp.jks
+      - uses: actions/upload-artifact@v4
+        if: env.KS != ''
+        with:
+          name: installer-android
+          path: '*.apk'
+          if-no-files-found: error
+
   release:
-    needs: build
+    needs: [build, android]
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

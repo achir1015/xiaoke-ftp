@@ -24,6 +24,9 @@ function fillIcons(root = document) { for (const el of $$('.ic-slot', root)) { e
 
 // ---------------- 本機窗格 ----------------
 function localCrumbs(p) {
+  // 手機：/storage/emulated/0 顯示成「手機」
+  const m = xk.mobile && /^(\/storage\/emulated\/0)(\/.*)?$/.exec(p);
+  if (m) { const parts = (m[2] || '').split('/').filter(Boolean); return [{ name: '手機', path: m[1] }, ...parts.map((x, i) => ({ name: x, path: m[1] + '/' + parts.slice(0, i + 1).join('/') }))]; }
   if (SEP === '/') { const parts = p.split('/').filter(Boolean); return [{ name: '/', path: '/' }, ...parts.map((x, i) => ({ name: x, path: '/' + parts.slice(0, i + 1).join('/') }))]; }
   const parts = p.split('\\').filter(Boolean);
   return parts.map((x, i) => ({ name: x, path: i === 0 ? x + '\\' : parts.slice(0, i + 1).join('\\') }));
@@ -44,12 +47,13 @@ function makeLocalPane() {
     menuExtra: (items) => {
       const one = items.length === 1 ? items[0] : null;
       return [
-        one ? { text: '在檔案總管中顯示', icon: icon('open'), onClick: () => xk.local.reveal(one.path) } : null,
+        one && !xk.mobile ? { text: '在檔案總管中顯示', icon: icon('open'), onClick: () => xk.local.reveal(one.path) } : null,
+        one && xk.mobile && !isDir(one) ? { text: '分享到其他 App', icon: icon('share'), onClick: () => xk.local.reveal(one.path).catch((e) => toast(e.message, 'error')) } : null,
         one && !isDir(one) ? { text: '計算校驗和', icon: icon('hash'), onClick: () => hashDialog(one.path) } : null,
-        one && isDir(one) ? { text: '用區網分享這個資料夾', icon: icon('share'), onClick: () => shareDialog({ ...S.settings, share: { ...S.settings.share, dir: one.path } }).then(refreshShare) } : null,
+        one && isDir(one) && !xk.mobile ? { text: '用區網分享這個資料夾', icon: icon('share'), onClick: () => shareDialog({ ...S.settings, share: { ...S.settings.share, dir: one.path } }).then(refreshShare) } : null,
       ];
     },
-  }, { showHidden: S.settings.showHidden });
+  }, { showHidden: S.settings.showHidden, touch: !!xk.mobile });
   pane.on('transfer', (items) => upload(items.map((x) => x.path), activeTab() && activeTab().pane.path));
   pane.on('drop', ({ items, targetDir }) => download(items, targetDir));
   pane.on('move', async ({ items, targetDir }) => {
@@ -83,13 +87,13 @@ function makeRemotePane(tab) {
     menuExtra: (items) => {
       const one = items.length === 1 ? items[0] : null;
       return [
-        one && !isDir(one) ? { text: '編輯（存檔後自動上傳）', icon: icon('edit'), onClick: () => editRemote(tab, one) } : null,
+        one && !isDir(one) && !xk.mobile ? { text: '編輯（存檔後自動上傳）', icon: icon('edit'), onClick: () => editRemote(tab, one) } : null,
         items.length ? { text: '下載到其他資料夾…', icon: icon('download'), onClick: async () => { const d = await xk.dialog.pickFolder('下載到哪個資料夾？', S.local.path); if (d) download(items, d); } } : null,
         one && /^(ftp|ftps|ftps-implicit|sftp)$/.test(p) ? { text: '權限…', icon: icon('chmod'), onClick: async () => { const m = await chmodDialog(one); if (m != null) { try { await xk.remote.chmod(tab.sid, one.path, m); toast('已修改權限', 'ok'); tab.pane.refresh(); } catch (e) { toast('修改權限失敗：' + e.message, 'error'); } } } } : null,
         one ? { text: '複製網址', icon: icon('link'), onClick: () => { navigator.clipboard.writeText(`${p.replace('-implicit', '')}://${tab.host}${one.path}`); toast('已複製'); } } : null,
       ];
     },
-  }, { showHidden: S.settings.showHidden });
+  }, { showHidden: S.settings.showHidden, touch: !!xk.mobile });
   pane.on('transfer', (items) => download(items, S.local.path));
   pane.on('drop', ({ items, targetDir }) => upload(items.map((x) => x.path), targetDir, tab));
   pane.on('osdrop', ({ paths, targetDir }) => upload(paths, targetDir, tab));
@@ -116,6 +120,7 @@ async function connect(target, { label } = {}) {
     if (r.localPath) S.local.go(r.localPath);
     voice.say('連線成功');
     setRemoteMsg('');
+    dispatchEvent(new Event('xk:connected'));
     refreshSites();
     return tab;
   } catch (e) {
@@ -193,7 +198,7 @@ function renderWelcome() {
 
 // ---------------- 傳輸 ----------------
 async function upload(localPaths, remoteDir, tab = activeTab()) {
-  if (!tab) return toast('請先連線到遠端主機，才能上傳', 'error');
+  if (!tab) { dispatchEvent(new Event('xk:need-remote')); return toast('請先連線到遠端主機，才能上傳', 'error'); }
   if (!localPaths.length) return toast('請先在左邊選取要上傳的檔案');
   remoteDir = remoteDir || tab.pane.path;
   try {
@@ -389,7 +394,7 @@ function firstRun() {
   xk.settings.set({ guideSeen: true });
   const m = modal({
     title: '歡迎！',
-    body: h('div', { class: 'first' }, h('img', { src: 'img/logo.png', width: 110, height: 110, alt: '' }), h('div', {}, h('h3', {}, '我是小柯機器人 🤖'), h('p', {}, '第一次使用嗎？要不要聽我用語音介紹怎麼使用？大約 5 分鐘，隨時可以停下來。'), h('p', { class: 'hint' }, '之後也可以隨時按右上角的「說明」或鍵盤 F1 再聽一次。'))),
+    body: h('div', { class: 'first' }, h('img', { src: 'img/logo.png', width: 110, height: 110, alt: '' }), h('div', {}, h('h3', {}, '我是小柯機器人 🤖'), h('p', {}, '第一次使用嗎？要不要聽我用語音介紹怎麼使用？大約 5 分鐘，隨時可以停下來。'), h('p', { class: 'hint' }, xk.mobile ? '之後也可以隨時按上方的喇叭圖示再聽一次。' : '之後也可以隨時按右上角的「說明」或鍵盤 F1 再聽一次。'))),
     buttons: [{ text: '先不用', value: false }, { text: '🔊 好，請介紹', kind: 'primary', default: true, value: true }],
   });
   m.done.then((v) => { if (v) openGuide(0); });
@@ -401,11 +406,13 @@ async function main() {
   [S.settings, S.info] = await Promise.all([xk.settings.get(), xk.sys.info()]);
   applyTheme();
   voice.configure(S.settings.voice);
+  if (xk.mobile) (await import('./mobile.js')).setupMobile(S, { refreshLocal: () => S.local && S.local.refresh() });
   $('#sbVer').textContent = `v${S.info.version}`;
 
   S.local = makeLocalPane();
   const startLocal = (await xk.local.exists(S.settings.localPath)) ? S.settings.localPath : null;
-  await S.local.go(startLocal || (await xk.local.places()).places[4].path);
+  const pl = await xk.local.places();
+  await S.local.go(startLocal || pl.home || pl.places[pl.places.length - 1].path);
 
   S.queue = new QueuePanel($('#queuePanel'), { onAsk: (t) => { askQ.unshift(t); nextAsk(); } });
   xk.queue.onAsk((t) => { askQ.push(t); nextAsk(); });

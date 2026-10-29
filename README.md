@@ -18,8 +18,11 @@
 | Windows（免安裝版） | `XiaokeFTP-版本-win-x64-portable.exe` |
 | MacBook（Apple 晶片） | `XiaokeFTP-版本-mac-arm64.dmg` |
 | Mac（Intel） | `XiaokeFTP-版本-mac-x64.dmg` |
+| Android 手機（8 以上） | `XiaokeFTP-版本-android.apk` |
 
 裝好之後程式會自動檢查新版本，按一下就能更新。
+
+**Android**：第一次安裝要允許「安裝不明應用程式」；開啟後請允許「所有檔案存取權」，才能讀寫手機裡的檔案。手機版暫不提供線上編輯與區網分享。
 
 ## 功能
 
@@ -41,7 +44,11 @@ npm start          # 執行開發版
 npm test           # 單元測試（本機 FTP／FTPS／SFTP／WebDAV 測試伺服器）
 npm run e2e        # 介面自動測試
 npm run dist:win   # 打包 Windows 安裝檔與免安裝版
+python android/build.py           # 打包 Android APK（需要 JDK 17、Android SDK；不用 Gradle）
+python android/build.py debug install   # 除錯版裝到手機，可跑 node e2e/phone.mjs 實機測試
 ```
+
+Android 版的畫面和電腦版是同一份程式（`scripts/build-mobile.mjs` 產生 `mobile/www`），連線由原生 Java 負責：FTP／FTPS 用 [Apache Commons Net](https://commons.apache.org/proper/commons-net/)（Apache 2.0）、SFTP 用 [JSch](https://github.com/mwiede/jsch)（BSD）、WebDAV 自行實作。
 
 發佈新版：修改 `package.json` 的 `version` 推上 `main`，GitHub Actions 會自動建置 Windows、macOS 並建立 Release。
 

@@ -6,6 +6,8 @@ export function toast(msg, kind = 'info', ms = 3200) {
   const root = $('#toasts');
   const el = h('div', { class: `toast ${kind}` }, msg);
   root.append(el);
+  // 手機畫面小：最多同時顯示 2 則
+  if (document.documentElement.classList.contains('mobile')) while (root.children.length > 2) root.firstElementChild.remove();
   requestAnimationFrame(() => el.classList.add('on'));
   setTimeout(() => { el.classList.remove('on'); setTimeout(() => el.remove(), 300); }, ms);
 }
@@ -19,7 +21,7 @@ export function modal({ title, body, buttons = [], wide = false, cls = '', onClo
   let resolveFn;
   const done = new Promise((r) => { resolveFn = r; });
   const close = (v) => {
-    if (!back.isConnected) return;
+    if (!back.isConnected || !back.classList.contains('on')) return;
     back.classList.remove('on');
     document.removeEventListener('keydown', onKey, true);
     setTimeout(() => back.remove(), 160);

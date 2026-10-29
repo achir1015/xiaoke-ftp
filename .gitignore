@@ -3,3 +3,7 @@ dist/
 e2e/out/
 __pycache__/
 *.log
+mobile/www/
+android/build/
+android/*.jks
+android/local.properties

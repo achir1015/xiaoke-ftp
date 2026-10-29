@@ -246,7 +246,7 @@ handle('local:places', async () => {
     await Promise.all('CDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(async (L) => { try { await fsp.access(L + ':\\'); drives.push({ name: L + ':', path: L + ':\\', icon: 'drive' }); } catch {} }));
     drives.sort((a, b) => a.name.localeCompare(b.name));
   } else drives.push({ name: '/', path: '/', icon: 'drive' });
-  return { places, drives };
+  return { places, drives, home: app.getPath('home') };
 });
 handle('local:mkdir', (p) => fsp.mkdir(p));
 handle('local:newFile', async (p) => { await fsp.writeFile(p, '', { flag: 'wx' }); return true; });

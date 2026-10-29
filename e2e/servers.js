@@ -16,7 +16,7 @@ function selfSigned(dir) {
 async function startFtp(root, port, tls) {
   const { FtpSrv } = require('ftp-srv');
   const silent = { trace() {}, debug() {}, info() {}, warn() {}, error() {}, fatal() {}, child() { return silent; } };
-  const srv = new FtpSrv({ url: `ftp://127.0.0.1:${port}`, pasv_url: '127.0.0.1', pasv_min: port + 10, pasv_max: port + 60, anonymous: false, greeting: 'xiaoke test', tls: tls || false, log: silent });
+  const srv = new FtpSrv({ url: `ftp://127.0.0.1:${port}`, pasv_url: "127.0.0.1", pasv_min: port + 10, pasv_max: port + 60, anonymous: false, greeting: 'xiaoke test', tls: tls || false, log: silent });
   srv.on('login', ({ username, password }, resolve, reject) => (username === USER && password === PASS ? resolve({ root }) : reject(new Error('bad login'))));
   srv.on('client-error', () => {});
   await srv.listen();
@@ -26,10 +26,12 @@ async function startFtp(root, port, tls) {
 function startSftp(root, port) {
   const { Server, utils } = require('ssh2');
   const { STATUS_CODE, flagsToString } = utils.sftp;
-  const hostKey = utils.generateKeyPairSync('ed25519').private;
+  // 同時提供 RSA 主機金鑰：Android 的 JSch 沒有 Ed25519
+  const rsa = require('crypto').generateKeyPairSync('rsa', { modulusLength: 2048, privateKeyEncoding: { type: 'pkcs1', format: 'pem' }, publicKeyEncoding: { type: 'spki', format: 'pem' } }).privateKey;
+  const hostKeys = [utils.generateKeyPairSync('ed25519').private, rsa];
   const toAttrs = (st) => ({ mode: st.mode, uid: 0, gid: 0, size: st.size, atime: Math.floor(st.atimeMs / 1000), mtime: Math.floor(st.mtimeMs / 1000) });
   const real = (p) => path.join(root, path.posix.normalize('/' + p).replace(/^\/+/, ''));
-  const srv = new Server({ hostKeys: [hostKey] }, (client) => {
+  const srv = new Server({ hostKeys }, (client) => {
     client.on('authentication', (ctx) => (ctx.method === 'password' && ctx.username === USER && ctx.password === PASS ? ctx.accept() : ctx.reject(['password'])));
     client.on('error', () => {});
     client.on('ready', () => client.on('session', (accept) => accept().on('sftp', (acc) => {

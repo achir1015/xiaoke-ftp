@@ -145,7 +145,7 @@ export class QueuePanel {
       if (ask) ask.onclick = (e) => { e.stopPropagation(); this.onAsk(t); };
       return r;
     });
-    if (!rows.length) rows.push(h('div', { class: 'q-empty' }, this.tab === 'active' ? '目前沒有傳輸中的檔案。把檔案從左邊拖到右邊就會上傳，從右邊拖到左邊就會下載。' : '（沒有項目）'));
+    if (!rows.length) rows.push(h('div', { class: 'q-empty' }, this.tab === 'active' ? (window.xk.mobile ? '目前沒有傳輸中的檔案。在「本機」勾選檔案按「上傳」，或在「遠端」勾選檔案按「下載」。' : '目前沒有傳輸中的檔案。把檔案從左邊拖到右邊就會上傳，從右邊拖到左邊就會下載。') : '（沒有項目）'));
     else if (arr.length > 800) rows.push(h('div', { class: 'q-empty' }, `…還有 ${arr.length - 800} 項`));
     this.listEl.replaceChildren(...rows);
   }

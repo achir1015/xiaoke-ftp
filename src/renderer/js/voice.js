@@ -14,7 +14,10 @@ class Voice {
     }
   }
 
-  list() { return 'speechSynthesis' in window ? speechSynthesis.getVoices().filter((v) => /^zh/i.test(v.lang)) : []; }
+  // 手機版（Android WebView 沒有網頁語音）改用原生的文字轉語音
+  get native() { return (window.xk && window.xk.tts) || null; }
+
+  list() { if (this.native) return []; return 'speechSynthesis' in window ? speechSynthesis.getVoices().filter((v) => /^zh/i.test(v.lang)) : []; }
 
   pick() {
     if (!('speechSynthesis' in window)) return;
@@ -33,14 +36,15 @@ class Voice {
     if (!this.enabled) this.stop();
   }
 
-  get available() { if (!this.voice) this.pick(); return 'speechSynthesis' in window && !!this.voice; }
-  get voiceName() { return this.voice ? this.voice.name : ''; }
+  get available() { if (this.native) return this.native.available(); if (!this.voice) this.pick(); return 'speechSynthesis' in window && !!this.voice; }
+  get voiceName() { if (this.native) return this.native.voiceName(); return this.voice ? this.voice.name : ''; }
 
-  stop() { if ('speechSynthesis' in window) speechSynthesis.cancel(); this.speaking = false; }
+  stop() { if (this.native) this.native.stop(); else if ('speechSynthesis' in window) speechSynthesis.cancel(); this.speaking = false; }
 
   // 短提示（傳輸完成等）：不排隊
   say(text) {
     if (!this.enabled || !this.notify || !this.available) return;
+    if (this.native) { if (!this.speaking) this.native.speak(text, this.rate); return; }
     if (speechSynthesis.speaking) return;
     const u = new SpeechSynthesisUtterance(text);
     u.voice = this.voice; u.lang = this.voice.lang; u.rate = this.rate * 1.05;
@@ -51,6 +55,7 @@ class Voice {
   speak(text) {
     const plain = String(text).replace(/[「」『』（）()【】※＊*]/g, ' ').replace(/S?FTPS?/g, (m) => ' ' + m.split('').join(' ') + ' ');
     if (!this.enabled || !this.available) return new Promise((r) => setTimeout(r, Math.min(12000, 800 + plain.length * 150)));
+    if (this.native) { this.speaking = true; return this.native.speak(plain, this.rate).then(() => { this.speaking = false; }); }
     speechSynthesis.cancel();
     return new Promise((resolve) => {
       const u = new SpeechSynthesisUtterance(plain);
