@@ -1,7 +1,7 @@
 {
   "name": "xiaoke-ftp",
   "productName": "小柯機器人FTP助手",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "小柯機器人FTP助手：FTP／FTPS／SFTP／WebDAV 雙窗格檔案管理、傳輸佇列（續傳、限速、資料夾）、站台管理、區網分享、語音說明、自動更新",
   "main": "src/main/main.js",
   "author": {

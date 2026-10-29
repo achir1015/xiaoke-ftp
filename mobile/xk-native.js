@@ -502,6 +502,7 @@
       exists: async (p) => !!p && !!(await call('l.stat', p)),
       // iPhone／iPad：從「檔案」或「照片」匯入（Android 直接瀏覽整個手機，不需要）
       import: IOS ? (dir, kind) => call('l.import', dir, kind) : undefined,
+      writeText: (p, text) => call('l.writeText', p, text),
     },
     dialog: { pickFolder: (title, def) => picker(title || '選擇資料夾', def, false), pickFiles: async (title) => { const p = await picker(title || '選擇檔案', '', true); return p ? [p] : []; } },
     queue: {

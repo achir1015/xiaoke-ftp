@@ -116,7 +116,7 @@ final class Native: NSObject {
             let label = (site["name"] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? (site["host"] as? String ?? "")
             let p = site["protocol"] as? String ?? "ftp"
             let log = logFor(label)
-            let c: Conn = p.hasPrefix("ftp") ? FtpConn(site: site, log: log) : p == "sftp" ? SftpConn(site: site, log: log) : DavConn(site: site, log: log)
+            let c: Conn = p.hasPrefix("ftp") ? FtpConn(site: site, log: log) as Conn : p == "sftp" ? SftpConn(site: site, log: log) as Conn : DavConn(site: site, log: log) as Conn
             let home: String
             do { home = try c.connect() } catch { c.close(); log("連線失敗：" + friendly(error)); throw error }
             lock.lock(); let cid = "c\(seq)"; seq += 1; conns[cid] = c; lock.unlock()

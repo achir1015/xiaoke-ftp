@@ -21,6 +21,8 @@ function copyDir(from, to) {
 fs.rmSync(OUT, { recursive: true, force: true });
 copyDir(path.join(ROOT, 'src', 'renderer'), OUT);
 fs.copyFileSync(path.join(ROOT, 'mobile', 'xk-native.js'), path.join(OUT, 'js', 'xk-native.js'));
+// iOS 模擬器自我測試（只有 XK_SELFTEST 啟動時才會載入）
+fs.copyFileSync(path.join(ROOT, 'mobile', 'selftest.js'), path.join(OUT, 'js', 'selftest.js'));
 let html = fs.readFileSync(path.join(OUT, 'index.html'), 'utf8');
 html = html.replace('<meta charset="utf-8">', '<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">');
 html = html.replace('<script type="module" src="js/app.js"></script>', '<script src="js/xk-native.js"></script>\n<script type="module" src="js/app.js"></script>');

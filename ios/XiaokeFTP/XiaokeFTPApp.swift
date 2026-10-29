@@ -50,6 +50,10 @@ final class Web: NSObject, WKScriptMessageHandler, WKNavigationDelegate, WKUIDel
             })();
             """, injectionTime: .atDocumentStart, forMainFrameOnly: true)
         cfg.userContentController.addUserScript(shim)
+        // 自動測試：simctl launch 時帶 SIMCTL_CHILD_XK_SELFTEST='{...}'，網頁載入後執行 js/selftest.js
+        if let t = ProcessInfo.processInfo.environment["XK_SELFTEST"], !t.isEmpty {
+            cfg.userContentController.addUserScript(WKUserScript(source: "window.__XK_SELFTEST = \(t); var s = document.createElement('script'); s.src = 'js/selftest.js'; document.head.appendChild(s);", injectionTime: .atDocumentEnd, forMainFrameOnly: true))
+        }
         view = WKWebView(frame: .zero, configuration: cfg)
         super.init()
         cfg.userContentController.add(self, name: "xkf")

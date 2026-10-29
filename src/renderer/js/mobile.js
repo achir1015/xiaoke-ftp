@@ -22,7 +22,8 @@ export function setupMobile(S, { refreshLocal }) {
   $('.topbar').prepend(menuBtn);
   $('.brand b').textContent = '小柯FTP助手';
   const lt = $('#paneLocal .pane-title b');
-  if (lt) lt.textContent = '本機（這支手機）';
+  const model = (S.info && S.info.model) || '';
+  if (lt) lt.textContent = S.info && S.info.platform === 'ios' ? (/iPad/.test(model) ? '本機（這台 iPad）' : '本機（這支 iPhone）') : '本機（這支手機）';
 
   // 下方切換列
   const nav = h('nav', { class: 'bottom-nav' });
