@@ -166,6 +166,29 @@ try {
     if (errModal) { console.log('    ', await page.locator('.modal-body').innerText()); await page.locator('.modal-foot button').click(); }
   }
 
+  console.log('站台按鈕與中斷連線');
+  const tabs0 = await page.locator('.rtab:not(.add)').count();
+  await page.locator('#btnDisconnect').click();
+  ok(await until(async () => (await page.locator('.rtab:not(.add)').count()) === tabs0 - 1), '「中斷連線」關閉目前的連線');
+  await S((site) => window.xk.sites.save({ ...site, name: '手機測試站台' }), env.sites.sftp);
+  await page.evaluate(() => { document.getElementById('siteFilter').dispatchEvent(new Event('input')); });
+  await S(() => window.__xkState.refreshSites && window.__xkState.refreshSites());
+  await page.locator('.menu-btn').click();
+  await page.locator('#siteList .site', { hasText: '手機測試站台' }).click();
+  ok(await until(async () => (await page.locator('.site-wrap.open .site-acts button').count()) === 3), '點站台出現連線／編輯／刪除');
+  await page.locator('.site-wrap.open [data-act=edit]').click();
+  ok(await until(() => page.locator('.modal-head b', { hasText: '編輯站台' }).count()), '「編輯」打開站台設定');
+  await page.locator('.modal-foot button', { hasText: '取消' }).click();
+  await page.locator('.site-wrap.open [data-act=connect]').click();
+  ok(await until(() => page.locator('.rtab.on', { hasText: '手機測試站台' }).count(), 20000), '按「連線」連上站台');
+  await page.locator('#btnDisconnect').click();
+  ok(await until(async () => (await page.locator('.rtab', { hasText: '手機測試站台' }).count()) === 0), '再按「中斷連線」');
+  await page.locator('.menu-btn').click();
+  await page.locator('.site-wrap.open [data-act=del]').click();
+  await page.locator('.modal-foot button', { hasText: '刪除' }).click();
+  ok(await until(async () => (await page.locator('#siteList .site', { hasText: '手機測試站台' }).count()) === 0), '「刪除」移除站台');
+  await S(() => document.querySelector('.drawer-shade').click());
+
   console.log('校驗和、說明、更新');
   const h = await S((p) => window.xk.hash.file(p), PHONE_DIR + '/報告.txt');
   ok(h && h.sha256 && h.sha256.length === 64, 'SHA256 計算');
@@ -178,7 +201,7 @@ try {
   adb('shell', 'input', 'keyevent', '4');
   ok(await until(() => page.locator('.guide').count().then((n) => n === 0)), '返回鍵關閉說明（語音停止）');
   const upd = await S(() => window.xk.update.check().then((r) => r, (e) => ({ error: e.message })));
-  ok(upd && upd.current === '1.1.0' && upd.latest, `檢查更新（目前 ${upd.current}、最新 ${upd.latest || upd.error}）`);
+  ok(upd && upd.current && upd.latest, `檢查更新（目前 ${upd.current}、最新 ${upd.latest || upd.error}）`);
   ok(errors.length === 0, '沒有網頁錯誤' + (errors.length ? '：' + errors.slice(0, 3).join(' | ') : ''));
 } catch (e) {
   fail++;

@@ -11,6 +11,7 @@ import { voice } from './voice.js';
 const xk = window.xk;
 const S = { settings: null, info: null, sites: [], tabs: [], active: null, local: null, queue: null, update: null };
 window.__xkState = S; // 給自動測試用
+S.refreshSites = () => refreshSites();
 
 // ---------------- 外觀 ----------------
 function applyTheme() {
@@ -165,6 +166,7 @@ async function closeTab(id) {
   S.tabs = S.tabs.filter((x) => x !== t);
   if (S.active === id) S.active = S.tabs.length ? S.tabs[S.tabs.length - 1].id : null;
   activate(S.active);
+  renderSites(); // 站台的「已連線」標示要跟著更新
 }
 
 async function reconnect(tab) {
@@ -183,6 +185,12 @@ function renderTabs() {
     return b;
   }), h('button', { class: 'rtab add', title: '連線到另一個站台', onclick: () => editSite() }, '＋'));
   if (!S.tabs.length) bar.prepend(h('div', { class: 'pane-title-text' }, h('b', {}, '遠端主機')));
+  const cur = activeTab();
+  if (cur) {
+    const b = h('button', { id: 'btnDisconnect', class: 'disconnect-btn', title: `中斷與「${cur.label}」的連線`, onclick: () => disconnect(cur) });
+    b.innerHTML = `${icon('disconnect')}<span>中斷連線</span>`;
+    bar.append(b);
+  }
 }
 
 function tabMenu(e, t) {
@@ -298,10 +306,16 @@ function renderSites() {
     if (g || keys.length > 1) root.append(h('div', { class: 'grp' }, g || '未分組'));
     for (const s of groups.get(g)) {
       const connected = S.tabs.some((t) => t.siteId === s.id);
-      const el = h('div', { class: `site ${connected ? 'conn' : ''}`, tabindex: '0', title: `${s.protocol.toUpperCase()}　${s.user ? s.user + '@' : ''}${s.host}:${s.port}${s.note ? '\n' + s.note : ''}\n點兩下連線`, 'data-id': s.id },
+      const el = h('div', { class: `site ${connected ? 'conn' : ''}`, tabindex: '0', title: `${s.protocol.toUpperCase()}　${s.user ? s.user + '@' : ''}${s.host}:${s.port}${s.note ? '\n' + s.note : ''}\n點一下顯示按鈕，點兩下連線`, 'data-id': s.id },
         h('span', { class: `badge p-${s.protocol}` }, PROTO_BADGE[s.protocol] || s.protocol),
         h('span', { class: 'sn' }, h('b', {}, s.name), h('small', {}, `${s.user ? s.user + '@' : ''}${s.host}`)),
         connected ? h('i', { class: 'live', title: '已連線' }) : null);
+      // 點一下展開「連線／編輯／刪除」（手機沒有右鍵也找得到）；不重畫清單，點兩下才連得到
+      const wrap = h('div', { class: `site-wrap ${S.selSite === s.id ? 'open' : ''}` }, el, siteActions(s, connected));
+      el.addEventListener('click', () => {
+        S.selSite = s.id;
+        for (const w of $$('.site-wrap', root)) w.classList.toggle('open', w === wrap);
+      });
       el.addEventListener('dblclick', () => connect(s.id, { label: s.name }));
       el.addEventListener('keydown', (e) => { if (e.key === 'Enter') connect(s.id, { label: s.name }); if (e.key === 'Delete') delSite(s); if (e.key === 'F2') editSite(s); });
       el.addEventListener('contextmenu', (e) => {
@@ -314,12 +328,34 @@ function renderSites() {
           { text: '刪除', icon: icon('del'), danger: true, onClick: () => delSite(s), key: 'Del' },
         ]);
       });
-      root.append(el);
+      root.append(wrap);
     }
   }
 }
+function siteActions(s, connected) {
+  const btn = (name, ic, text, onclick, cls = '') => {
+    const b = h('button', { class: `mini ${cls}`, 'data-act': name, onclick });
+    b.innerHTML = icon(ic) + `<span>${text}</span>`;
+    return b;
+  };
+  return h('div', { class: 'site-acts' },
+    connected ? btn('disconnect', 'disconnect', '中斷連線', () => disconnectSite(s), 'danger') : btn('connect', 'bolt', '連線', () => connect(s.id, { label: s.name }), 'primary'),
+    btn('edit', 'edit', '編輯', () => editSite(s)),
+    btn('del', 'del', '刪除', () => delSite(s), 'danger'));
+}
+function disconnectSite(s) {
+  for (const t of S.tabs.filter((x) => x.siteId === s.id)) disconnect(t);
+}
+// 中斷瀏覽用的連線；傳輸中的檔案用自己的連線，會繼續傳完
+function disconnect(t) {
+  const busy = [...S.queue.tasks.values()].some((x) => x.site === t.label && ['queued', 'scanning', 'running', 'ask'].includes(x.status));
+  closeTab(t.id);
+  toast(`已中斷「${t.label}」${busy ? '，傳輸中的檔案會繼續傳完' : ''}`, 'info');
+}
 async function delSite(s) {
-  if (!(await confirmBox('刪除站台', `確定要刪除站台「${s.name}」嗎？（只刪除設定，不會動到主機上的檔案）`, { okText: '刪除', danger: true }))) return;
+  const connected = S.tabs.some((t) => t.siteId === s.id);
+  if (!(await confirmBox('刪除站台', `確定要刪除站台「${s.name}」嗎？${connected ? '目前的連線也會中斷。' : ''}（只刪除設定，不會動到主機上的檔案）`, { okText: '刪除', danger: true }))) return;
+  disconnectSite(s);
   await xk.sites.delete(s.id);
   refreshSites();
 }

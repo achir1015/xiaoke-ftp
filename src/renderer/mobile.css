@@ -29,6 +29,8 @@ html.mobile .drawer-quick .quick select { width: 100%; }
 html.mobile .drawer-quick #qPort { width: 100%; }
 html.mobile .drawer-quick .btn { grid-column: 1 / -1; justify-content: center; }
 html.mobile .site { padding: 10px 8px; }
+html.mobile .site-acts .mini { padding: 8px 12px; font-size: 14px; }
+html.mobile .disconnect-btn { height: 32px; }
 
 /* 一次一個畫面 */
 html.mobile .work { grid-template-rows: 1fr; }

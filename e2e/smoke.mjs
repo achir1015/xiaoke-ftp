@@ -197,6 +197,28 @@ try {
   await win.locator('.rtab', { hasText: '測試 FTP' }).click();
   await win.screenshot({ path: path.join(ROOT, 'e2e', 'out', 'main.png') });
 
+  console.log('站台按鈕與中斷連線');
+  const siteRow = win.locator('#siteList .site', { hasText: '測試 FTP' });
+  const acts = win.locator('.site-wrap.open .site-acts');
+  await siteRow.click();
+  ok(await until(async () => (await acts.locator('button').count()) === 3), '點站台出現三個按鈕');
+  ok(await acts.locator('[data-act=disconnect]').count() === 1, '已連線的站台顯示「中斷連線」');
+  await acts.locator('[data-act=edit]').click();
+  ok(await until(() => win.locator('.modal-head b', { hasText: '編輯站台' }).count()), '「編輯」打開站台設定');
+  await win.locator('.modal-foot button', { hasText: '取消' }).click();
+  await win.locator('.rtab', { hasText: '測試 FTP' }).click();
+  const tabs = await win.locator('.rtab:not(.add)').count();
+  await win.locator('#btnDisconnect').click();
+  ok(await until(async () => (await win.locator('.rtab:not(.add)').count()) === tabs - 1), '遠端窗格的「中斷連線」關閉目前的連線');
+  ok(await until(async () => (await win.locator('.site-wrap.open [data-act=connect]').count()) === 1), '站台按鈕變回「連線」');
+  await win.locator('.site-wrap.open [data-act=connect]').click();
+  ok(await until(() => win.locator('.rtab.on', { hasText: '測試 FTP' }).count()), '按「連線」重新連上');
+  ok(await until(async () => (await win.locator('.site-wrap.open [data-act=disconnect]').count()) === 1), '站台按鈕變成「中斷連線」');
+  await win.locator('.site-wrap.open [data-act=disconnect]').click();
+  ok(await until(async () => (await win.locator('.rtab:not(.add)').count()) === tabs - 1), '站台的「中斷連線」也能中斷');
+  await win.locator('.site-wrap.open [data-act=del]').click();
+  await win.locator('.modal-foot button', { hasText: '刪除' }).click();
+  ok(await until(async () => (await win.locator('#siteList .site', { hasText: '測試 FTP' }).count()) === 0), '「刪除」移除站台');
   ok(errors.length === 0, '沒有網頁錯誤' + (errors.length ? '：' + errors.join(' | ') : ''));
 } catch (e) {
   fail++;

@@ -1,0 +1,38 @@
+// 截圖：站台按鈕＋中斷連線（看實際畫面用）
+import { _electron as electron } from 'playwright-core';
+import { createRequire } from 'module';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const require = createRequire(import.meta.url);
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const { startAll } = require('./servers.js');
+const env = await startAll(34500);
+const userData = path.join(process.env.APPDATA, 'xiaoke-ftp-shot');
+fs.rmSync(userData, { recursive: true, force: true });
+fs.mkdirSync(userData, { recursive: true });
+fs.writeFileSync(path.join(userData, 'settings.json'), JSON.stringify({ guideSeen: true, autoUpdate: false, localPath: os.tmpdir() }));
+const app = await electron.launch({ executablePath: require('electron'), args: [ROOT, '--profile=shot'], cwd: ROOT });
+const win = await app.firstWindow();
+await app.evaluate(({ BrowserWindow }) => { const b = BrowserWindow.getAllWindows()[0]; b.unmaximize(); b.setSize(1300, 760); b.center(); });
+await win.waitForFunction(() => document.body.classList.contains('ready'));
+await win.evaluate(async (s) => {
+  const a = await window.xk.sites.save({ ...s, name: '公司網站', group: '工作' });
+  await window.xk.sites.save({ ...s, name: '家裡 NAS', group: '工作' });
+  void a;
+}, env.sites.ftp);
+await win.reload();
+await win.waitForFunction(() => document.body.classList.contains('ready'));
+await win.locator('#siteList .site', { hasText: '公司網站' }).click();
+await win.locator('.site-wrap.open [data-act=connect]').click();
+await win.waitForSelector('#btnDisconnect');
+await win.waitForTimeout(600);
+await win.locator('#siteList .site', { hasText: '家裡 NAS' }).click();
+await win.waitForTimeout(300);
+const img = await app.evaluate(async ({ BrowserWindow }) => { const p = await BrowserWindow.getAllWindows()[0].webContents.capturePage(); return p.toPNG().toString('base64'); });
+fs.writeFileSync(path.join(ROOT, 'e2e/out/site-acts.png'), Buffer.from(img, 'base64'));
+await app.close();
+await env.close();
+fs.rmSync(userData, { recursive: true, force: true });
+process.exit(0);

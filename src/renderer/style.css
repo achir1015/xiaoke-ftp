@@ -86,6 +86,16 @@ body.ready #app { opacity: 1; }
 .site .sn { display: flex; flex-direction: column; min-width: 0; }
 .site .sn b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .site .sn small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.site-wrap.open > .site { background: var(--sel); }
+.site-acts { display: none; gap: 4px; padding: 5px 8px 8px; flex-wrap: wrap; }
+.site-wrap.open > .site-acts { display: flex; }
+.site-acts .mini { display: inline-flex; align-items: center; gap: 3px; padding: 4px 8px; }
+.site-acts .mini .ic { width: 14px; height: 14px; }
+.site-acts .mini.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.site-acts .mini.danger { color: var(--bad); }
+.disconnect-btn { position: sticky; right: 0; margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 9px; border: 1px solid var(--bad); border-radius: 7px; background: var(--panel); color: var(--bad); cursor: pointer; font-size: 13px; white-space: nowrap; }
+.disconnect-btn:hover { background: var(--bad-soft); }
+.disconnect-btn .ic { width: 15px; height: 15px; }
 .site .live { position: absolute; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 3px var(--ok-soft); }
 .side-empty { color: var(--muted); padding: 20px 8px; text-align: center; line-height: 2.2; }
 .side-foot { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--line2); }
