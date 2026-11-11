@@ -40,7 +40,7 @@ final class Web: NSObject, WKScriptMessageHandler, WKNavigationDelegate, WKUIDel
         let model = UIDevice.current.userInterfaceIdiom == .pad ? "iPad" : "iPhone"
         // 讓網頁知道自己在 iPhone／iPad App 裡（mobile/xk-native.js 會改用原生功能）；錯誤訊息轉到系統記錄
         let shim = WKUserScript(source: """
-            window.XiaokeIOS = { info: { platform: 'ios', version: '\(ver)', model: '\(model)' } };
+            window.XiaokeIOS = { info: { platform: 'ios', version: '\(ver)', model: '\(model)', store: true } };
             (function () {
               function send(k, a) { try { window.webkit.messageHandlers.xkf.postMessage({ id: '', method: 'log', args: [k, Array.prototype.map.call(a, function (x) { return x && x.stack ? x.stack : String(x); }).join(' ')] }); } catch (e) {} }
               var ce = console.error.bind(console);

@@ -222,11 +222,11 @@ final class Native: NSObject {
             guard let u = URL(string: s(0)), ["github.com", "achir1015.github.io"].contains(u.host ?? "") else { return false }
             DispatchQueue.main.async { UIApplication.shared.open(u) }
             return true
-        case "update.check": return try checkUpdate()
-        case "update.install":
-            DispatchQueue.main.async { UIApplication.shared.open(URL(string: "https://achir1015.github.io/xiaoke-ftp/ios/")!) }
-            return ["state": "launching", "pct": 100]
-        case "update.status": return ["state": "launching", "pct": 100]
+        // App Store 版：新版本由 App Store 更新，App 本身不檢查也不下載
+        case "update.check":
+            let cur = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+            return ["current": cur, "latest": cur, "page": "", "notes": ""]
+        case "update.install", "update.status": throw XKError("新版本請到 App Store 更新")
         case "tts.speak": return try Speech.shared.speak(s(0), rate: (a.count > 1 ? (a[1] as? NSNumber)?.doubleValue : nil) ?? 1)
         case "tts.stop": Speech.shared.stop(); return true
         default: throw XKError("未知的功能：" + m)
@@ -289,20 +289,6 @@ final class Native: NSObject {
             k += 1
         }
         do { try fm.copyItem(at: src, to: dst); return dst } catch { return nil }
-    }
-
-    // MARK: 版本更新：GitHub 最新版（iPad／iPhone 從安裝頁面更新）
-    func checkUpdate() throws -> [String: Any] {
-        let cur = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
-        var r = URLRequest(url: URL(string: "https://github.com/achir1015/xiaoke-ftp/releases/latest")!)
-        r.httpMethod = "HEAD"
-        let sem = DispatchSemaphore(value: 0)
-        var final: URL?
-        URLSession.shared.dataTask(with: r) { _, resp, _ in final = resp?.url; sem.signal() }.resume()
-        sem.wait()
-        guard let u = final, let i = u.path.range(of: "/releases/tag/") else { throw XKError("查詢失敗，請稍後再試") }
-        let tag = String(u.path[i.upperBound...])
-        return ["current": cur, "latest": tag.replacingOccurrences(of: "v", with: ""), "url": "https://achir1015.github.io/xiaoke-ftp/ios/", "page": "https://achir1015.github.io/xiaoke-ftp/ios/", "notes": ""]
     }
 }
 

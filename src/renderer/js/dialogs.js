@@ -162,8 +162,8 @@ export async function settingsDialog(settings) {
     h('label', { class: 'chk' }, el.voiceOn, '開啟語音說明'),
     h('label', { class: 'chk' }, el.voiceNotify, '傳輸完成、連線成功時用語音提醒'),
     h('div', { class: 'grid2' }, field('聲音', el.voiceName), field('語速', h('div', { class: 'inrow' }, el.voiceRate, rateLbl, testVoice))),
-    window.xk.web ? relaySection(s) : h('h4', {}, '更新'),
-    window.xk.web ? null : h('label', { class: 'chk' }, el.autoUpdate, '啟動時自動檢查新版本'));
+    window.xk.web ? relaySection(s) : window.xk.store ? null : h('h4', {}, '更新'),
+    window.xk.web || window.xk.store ? null : h('label', { class: 'chk' }, el.autoUpdate, '啟動時自動檢查新版本'));
   const r = await modal({ title: '設定', body, wide: true, buttons: [{ text: '取消', value: null }, { text: '儲存', kind: 'primary', default: true, value: true }] }).done;
   if (!r) { voice.configure(s.voice); return null; }
   const relayUrl = body.querySelector('#relayUrl');
@@ -305,10 +305,11 @@ export function aboutDialog(info) {
     h('img', { src: 'img/logo.png', width: 128, height: 128, alt: '' }),
     h('div', {},
       h('h3', {}, '小柯機器人FTP助手'),
-      h('p', {}, `版本 v${info.version}（${info.platform === 'win32' ? 'Windows' : info.platform === 'darwin' ? 'macOS' : info.platform} ${info.arch}）`),
+      h('p', {}, `版本 v${info.version}（${info.platform === 'win32' ? 'Windows' : info.platform === 'darwin' ? 'macOS' : info.platform === 'ios' ? (info.model || 'iPhone／iPad') : info.platform} ${info.arch}）`),
+      window.xk.store ? h('p', { class: 'hint' }, '新版本會由 App Store 自動更新。') : null,
       h('p', {}, '開發：吳玉柱 先生 與 Claude AI Opus 5.5'),
       h('p', { class: 'hint' }, '支援 FTP、FTPS、SFTP、WebDAV 的雙窗格檔案管理工具：拖放上傳下載、續傳、限速、站台管理、線上編輯、區網分享、校驗和、語音說明。介面設計參考 FileCentipede 的檔案瀏覽器理念，程式完全自行撰寫。'),
-      h('p', { class: 'hint' }, '使用的開放原始碼套件：Electron、basic-ftp、ssh2、qrcode（皆為 MIT 授權）；Android 版另使用 Apache Commons Net（Apache 2.0）、JSch（BSD）。'),
+      h('p', { class: 'hint' }, '使用的開放原始碼套件：Electron、basic-ftp、ssh2、qrcode（皆為 MIT 授權）；Android 版另使用 Apache Commons Net（Apache 2.0）、JSch（BSD）；iPhone／iPad 版使用 Citadel（MIT）、SwiftNIO SSH（Apache 2.0）。'),
       h('p', {}, h('a', { href: '#', onclick: (e) => { e.preventDefault(); window.xk.openExternal('https://github.com/achir1015/xiaoke-ftp'); } }, 'GitHub：achir1015/xiaoke-ftp'))));
   return modal({ title: '關於', body, buttons: [{ text: '關閉', kind: 'primary', value: true, default: true }] }).done;
 }

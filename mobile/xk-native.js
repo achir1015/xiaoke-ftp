@@ -453,6 +453,7 @@
   window.xk = {
     mobile: !WEB,
     web: !!WEB,
+    store: !!appInfo.store, // App Store 版（iPhone／iPad）：不顯示「更新」，由 App Store 更新
     relay: WEB ? { info: WEB.relayInfo, forgetPassword: WEB.forgetPassword } : undefined,
     tts,
     settings: { get: async () => getSettings(), set: async (p) => setSettings(p) },

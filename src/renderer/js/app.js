@@ -438,7 +438,7 @@ async function refreshShare() {
 
 // ---------------- 更新 ----------------
 async function autoCheckUpdate() {
-  if (S.settings.autoUpdate === false) return;
+  if (xk.store || S.settings.autoUpdate === false) return;
   try {
     const info = await xk.update.check();
     S.update = info;
@@ -521,6 +521,7 @@ async function main() {
     toast('設定已儲存', 'ok');
   };
   $('#btnUpdate').onclick = () => updateDialog(S.update && S.update.newer ? S.update : null);
+  if (xk.store) $('#btnUpdate').style.display = 'none'; // App Store 版由 App Store 更新
   $('#btnAbout').onclick = () => aboutDialog(S.info);
 
   addEventListener('keydown', (e) => {

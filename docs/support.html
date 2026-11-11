@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>小柯FTP助手 技術支援</title>
+<link rel="apple-touch-icon" href="ios/icon-180.png">
+<style>
+  :root { --bg:#eef3fb; --card:#fff; --fg:#1c2a44; --dim:#6a7891; --accent:#1f6fe0; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#101522; --card:#1b2335; --fg:#eef2f7; --dim:#a9b6c8; --accent:#7fb0ff; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.7 -apple-system, "PingFang TC", "Noto Sans TC", sans-serif; }
+  main { max-width:720px; margin:0 auto; padding:24px 16px 48px; }
+  .head { display:flex; align-items:center; gap:16px; }
+  .head img { width:72px; height:72px; border-radius:16px; }
+  section { background:var(--card); border-radius:14px; padding:16px 20px; margin:14px 0; }
+  h1 { font-size:24px; margin:0; } h2 { font-size:18px; margin:0 0 6px; color:var(--accent); } .dim { color:var(--dim); font-size:14px; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<main>
+<div class="head"><img src="ios/icon-180.png" alt=""><div><h1>小柯機器人FTP助手</h1><p class="dim" style="margin:0">技術支援</p></div></div>
+
+<section><h2>這是什麼</h2>
+<p>小柯FTP助手是雙窗格的檔案傳輸工具，支援 FTP、FTPS、SFTP、WebDAV：上傳、下載、續傳、限速、站台管理、線上編輯、校驗和，還有小柯機器人的語音說明。</p></section>
+
+<section><h2>開始使用</h2>
+<ol>
+<li>點左上角選單，按「新增站台」，填入主機名稱、連接埠、帳號與密碼，按「儲存」。</li>
+<li>點一下站台，按「連線」。</li>
+<li>在「本機」選檔案按「上傳」，或在「遠端」選檔案按「下載」。</li>
+<li>傳完想離開，按右上角紅色的「中斷連線」。</li>
+</ol>
+<p>按「說明」可以聽小柯用語音一步一步講解。</p></section>
+
+<section><h2>連不上怎麼辦</h2>
+<ul>
+<li>先看「傳輸」畫面裡「記錄」分頁的訊息。常見原因：主機名稱或連接埠打錯、帳號密碼錯誤、防火牆擋住。</li>
+<li>連家裡或公司的 NAS 時，第一次會詢問「區域網路」權限，請按「允許」。若之前按了不允許，請到「設定 → 小柯FTP助手」打開「區域網路」。</li>
+<li>FTPS 或 WebDAVS 出現憑證錯誤時，如果是自己的 NAS 或路由器，可以在站台設定勾選「信任自簽憑證」。</li>
+<li>SFTP 主機指紋改變時，小柯會警告。請先向主機管理員確認。</li>
+</ul></section>
+
+<section><h2>下載的檔案在哪裡</h2>
+<p>iPhone／iPad：打開「檔案」App →「我的 iPhone（或 iPad）」→「小柯FTP助手」。</p></section>
+
+<section><h2>聯絡我們</h2>
+<p>問題回報或建議：<a href="https://github.com/achir1015/xiaoke-ftp/issues">GitHub 問題回報</a></p>
+<p><a href="privacy.html">隱私權政策</a></p></section>
+
+<p class="dim">開發：吳玉柱 先生 與 Claude AI Opus 5.5</p>
+</main>
+</body>
+</html>

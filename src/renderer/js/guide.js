@@ -85,7 +85,7 @@ let state = { i: 0, auto: true };
 // 手機版用手機的講法（m、mt），不支援的課（mobile: false）略過
 function lessons() {
   if (!(window.xk && window.xk.mobile)) return LESSONS;
-  return LESSONS.filter((l) => l.mobile !== false).map((l) => ({ ...l, p: l.m || l.p, target: 'mt' in l ? l.mt : l.target }));
+  return LESSONS.filter((l) => l.mobile !== false && !(window.xk.store && l.target === '#btnUpdate')).map((l) => ({ ...l, p: l.m || l.p, target: 'mt' in l ? l.mt : l.target }));
 }
 
 export function openGuide(start) {

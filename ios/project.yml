@@ -37,7 +37,6 @@ targets:
         CFBundleDevelopmentRegion: zh_TW
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen:
           UIColorName: ""
         # iPhone 直放；iPad 四個方向（橫放時左右兩個窗格並排）
