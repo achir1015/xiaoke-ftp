@@ -37,6 +37,8 @@ targets:
         CFBundleDevelopmentRegion: zh_TW
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # SFTP 用標準加密演算法、不在法國上架 → App Store Connect 判定免出口申報（2026-11-11）
+        ITSAppUsesNonExemptEncryption: false
         UILaunchScreen:
           UIColorName: ""
         # iPhone 直放；iPad 四個方向（橫放時左右兩個窗格並排）
