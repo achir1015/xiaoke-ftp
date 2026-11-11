@@ -10,6 +10,7 @@ const inv = (ch) => async (...a) => {
 const on = (ch) => (fn) => { const h = (e, d) => fn(d); ipcRenderer.on(ch, h); return () => ipcRenderer.off(ch, h); };
 
 contextBridge.exposeInMainWorld('xk', {
+  platform: process.platform,
   settings: { get: inv('settings:get'), set: inv('settings:set') },
   sys: { info: inv('sys:info') },
   openExternal: inv('app:openExternal'),

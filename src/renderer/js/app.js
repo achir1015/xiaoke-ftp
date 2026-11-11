@@ -1,5 +1,5 @@
 // 小柯機器人FTP助手：主畫面
-import { h, $, $$, human, speedText, rjoin, rparent, rbase, ljoin, lparent, lbase, SEP } from './util.js';
+import { h, $, $$, human, speedText, rjoin, rparent, rbase, ljoin, lparent, lbase, SEP, T } from './util.js';
 import { icon, PROTO_BADGE } from './icons.js';
 import { Pane, isDir } from './pane.js';
 import { QueuePanel } from './queue.js';
@@ -59,11 +59,11 @@ function makeLocalPane() {
     menuExtra: (items) => {
       const one = items.length === 1 ? items[0] : null;
       return [
-        one && !xk.mobile && !xk.web ? { text: '在檔案總管中顯示', icon: icon('open'), onClick: () => xk.local.reveal(one.path) } : null,
+        one && !xk.mobile && !xk.web ? { text: T('在檔案總管中顯示'), icon: icon('open'), onClick: () => xk.local.reveal(one.path) } : null,
         one && xk.web && !isDir(one) ? { text: '存到電腦（下載）', icon: icon('download'), onClick: () => xk.local.reveal(one.path).catch((e) => toast(e.message, 'error')) } : null,
         one && xk.mobile && !isDir(one) ? { text: '分享到其他 App', icon: icon('share'), onClick: () => xk.local.reveal(one.path).catch((e) => toast(e.message, 'error')) } : null,
         one && !isDir(one) ? { text: '計算校驗和', icon: icon('hash'), onClick: () => hashDialog(one.path) } : null,
-        one && isDir(one) && !xk.mobile && !xk.web ? { text: '用區網分享這個資料夾', icon: icon('share'), onClick: () => shareDialog({ ...S.settings, share: { ...S.settings.share, dir: one.path } }).then(refreshShare) } : null,
+        one && isDir(one) && !xk.noShare ? { text: '用區網分享這個資料夾', icon: icon('share'), onClick: () => shareDialog({ ...S.settings, share: { ...S.settings.share, dir: one.path } }).then(refreshShare) } : null,
       ];
     },
   }, { showHidden: S.settings.showHidden, touch: !!xk.mobile });
@@ -469,6 +469,7 @@ async function main() {
   applyTheme();
   voice.configure(S.settings.voice);
   if (xk.web) document.documentElement.classList.add('web');
+  if (xk.noShare) document.documentElement.classList.add('noshare'); // 區網分享只有 Electron 電腦版有
   // 手機 App，或線上版用手機瀏覽器打開（畫面窄）時，用手機版面
   if (xk.mobile || (xk.web && innerWidth < 820)) (await import('./mobile.js')).setupMobile(S, { refreshLocal: () => S.local && S.local.refresh() });
   if (xk.web) { const lt = $('#paneLocal .pane-title b'); if (lt) lt.textContent = '本機（電腦資料夾／瀏覽器暫存區）'; }

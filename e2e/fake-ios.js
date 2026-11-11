@@ -1,7 +1,8 @@
 // App Store 截圖用：在瀏覽器裡假裝成 iPhone／iPad App 的原生程式（webkit.messageHandlers.xkf），
 // 本機與遠端都是記憶體裡的示範檔案，傳輸會慢慢跑進度。只給 e2e/shots-store.mjs 用。
 (function () {
-  const DOCS = '/var/mobile/Documents';
+  const MAC = window.__fakeModel === 'Mac';
+  const DOCS = MAC ? '/Users/me/Downloads' : '/var/mobile/Documents';
   const now = Date.now(), day = 86400000;
   const fs = { L: new Map(), R: new Map() };
   const add = (side, p, type, size, ago) => fs[side].set(p, { type, size: size || 0, mtime: now - (ago || 0) * day });
@@ -46,7 +47,8 @@
   }
 
   const handlers = {
-    'l.places': () => ({ places: [{ name: '我的檔案', path: DOCS, icon: 'home' }, { name: '下載', path: DOCS + '/下載', icon: 'down' }], drives: [], home: DOCS, root: { name: '我的檔案', path: DOCS } }),
+    'l.places': () => (MAC ? { places: [{ name: '下載', path: DOCS, icon: 'down' }, { name: '工作文件', path: DOCS + '/工作文件', icon: 'open' }, { name: '加入其他資料夾…', path: '', icon: 'plus', grant: true }], drives: [], home: DOCS, root: { name: '下載', path: DOCS } }
+      : { places: [{ name: '我的檔案', path: DOCS, icon: 'home' }, { name: '下載', path: DOCS + '/下載', icon: 'down' }], drives: [], home: DOCS, root: { name: '我的檔案', path: DOCS } }),
     'l.list': (p) => ({ path: p, items: list('L', p) }),
     'l.stat': (p) => item('L', p) || null,
     'l.walk': (p) => ({ files: [...fs.L.keys()].filter((k) => k.startsWith(p + '/') && fs.L.get(k).type === 'file').map((k) => ({ path: k, size: fs.L.get(k).size, mtime: fs.L.get(k).mtime })), dirs: [p, ...[...fs.L.keys()].filter((k) => k.startsWith(p + '/') && fs.L.get(k).type === 'dir')] }),
@@ -69,5 +71,5 @@
       done(id, true, h ? h(...args) : true);
     } catch (e) { done(id, false, e.message); }
   } } } };
-  window.XiaokeIOS = { info: { platform: 'ios', version: '1.2.2', model: window.__fakeModel || 'iPhone', store: true } };
+  window.XiaokeIOS = { info: MAC ? { platform: 'mac', version: '1.2.2', model: 'Mac', store: true, desktop: true } : { platform: 'ios', version: '1.2.2', model: window.__fakeModel || 'iPhone', store: true } };
 })();

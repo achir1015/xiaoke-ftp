@@ -1,5 +1,5 @@
 // 檔案窗格：本機與遠端共用的檔案清單（排序、篩選、多選、鍵盤、拖放、右鍵選單）
-import { h, esc, human, dateText, Emitter } from './util.js';
+import { h, esc, human, dateText, Emitter, T } from './util.js';
 import { fileIcon, icon, kindOf, KIND_NAME } from './icons.js';
 import { contextMenu, promptBox, confirmBox, toast } from './ui.js';
 
@@ -46,7 +46,7 @@ export class Pane extends Emitter {
       btn('newdir', '新增資料夾', () => this.newFolder()),
       btn('newfile', '新增空白檔案', () => this.newFile()),
       btn('rename', '重新命名（F2）', () => this.renameSel()),
-      btn('del', side === 'local' ? '刪除（移到資源回收筒）' : '刪除（Delete）', () => this.deleteSel(), 'danger'),
+      btn('del', side === 'local' ? T('刪除（移到資源回收筒）') : '刪除（Delete）', () => this.deleteSel(), 'danger'),
       h('span', { class: 'tsep' }),
     );
     const go = h('button', { class: `tb go ${side === 'local' ? 'up' : 'down'}`, 'data-act': 'transfer', title: side === 'local' ? '把選取的檔案上傳到右邊的遠端資料夾' : '把選取的檔案下載到左邊的本機資料夾', onclick: () => this.transferSel() });
@@ -217,11 +217,13 @@ export class Pane extends Emitter {
   }
 
   async showPlaces(e) {
+    const r = e.currentTarget.getBoundingClientRect(); // 要在 await 之前取：事件處理完 currentTarget 就變成 null
     const { places, drives } = await this.a.places();
-    const r = e.currentTarget.getBoundingClientRect();
     contextMenu(r.left, r.bottom + 2, [
-      ...places.map((p) => ({ text: p.name, icon: icon(p.icon === 'down' ? 'download' : p.icon === 'home' ? 'home' : 'open'), onClick: () => this.go(p.path) })),
-      '-',
+      // grant：Mac App Store 版的「加入其他資料夾…」（沙盒裡要使用者在開啟視窗選過才能讀寫）
+      ...places.map((p) => ({ text: p.name, icon: icon(p.icon === 'down' ? 'download' : p.icon === 'home' ? 'home' : p.icon === 'plus' ? 'plus' : 'open'),
+        onClick: async () => { const d = p.grant ? await window.xk.dialog.pickFolder('選擇要加入的資料夾') : p.path; if (d) this.go(d); } })),
+      ...(drives.length ? ['-'] : []),
       ...drives.map((d) => ({ text: `磁碟 ${d.name}`, icon: icon('server'), onClick: () => this.go(d.path) })),
     ]);
   }
@@ -254,7 +256,7 @@ export class Pane extends Emitter {
     if (!items.length) return toast('請先選取要刪除的檔案');
     const what = items.length === 1 ? `「${items[0].name}」` : `這 ${items.length} 個項目`;
     const dirs = items.filter(isDir).length;
-    const msg = this.side === 'local' ? `要把${what}移到資源回收筒嗎？` : `確定要永久刪除遠端的${what}嗎？${dirs ? '資料夾裡的所有檔案也會一起刪除。' : ''}刪除後無法復原。`;
+    const msg = this.side === 'local' ? T(`要把${what}移到資源回收筒嗎？`) : `確定要永久刪除遠端的${what}嗎？${dirs ? '資料夾裡的所有檔案也會一起刪除。' : ''}刪除後無法復原。`;
     if (this.a.confirmDelete() && !(await confirmBox('刪除', msg, { okText: '刪除', danger: true }))) return;
     try { await this.a.delete(items); toast(`已刪除 ${items.length} 個項目`, 'ok'); } catch (e) { toast('刪除失敗：' + e.message, 'error'); }
     this.refresh(false);

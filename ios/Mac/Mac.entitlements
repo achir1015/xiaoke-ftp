@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Mac App Store 版必須開沙盒：
+     network.client：連到 FTP／SFTP／WebDAV 主機
+     network.server：App 裡的小型網頁伺服器（只聽 127.0.0.1，提供畫面給 WKWebView）
+     files.downloads：預設的本機資料夾「下載」
+     files.user-selected＋bookmarks.app-scope：使用者在開啟視窗選的資料夾／私鑰檔，下次開 App 仍可使用 -->
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<key>com.apple.security.network.server</key>
+	<true/>
+	<key>com.apple.security.files.downloads.read-write</key>
+	<true/>
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+	<key>com.apple.security.files.bookmarks.app-scope</key>
+	<true/>
+</dict>
+</plist>

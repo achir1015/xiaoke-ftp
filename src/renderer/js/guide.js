@@ -1,5 +1,5 @@
 // 使用說明：文字＋語音朗讀（進來就自動念、念完自動下一課）、示意圖、「指給我看」聚光燈
-import { h, $ } from './util.js';
+import { h, $, T, isMac } from './util.js';
 import { modal } from './ui.js';
 import { voice } from './voice.js';
 
@@ -20,6 +20,9 @@ export const LESSONS = [
   { t: '瀏覽檔案', mt: '#paneLocal', m: ['「本機」和「遠端」兩個畫面的操作方式一樣：點一下資料夾就進去，按手機的返回鍵就回到上一層。', '上方的路徑可以點任何一層直接跳過去；左邊的小房子按鈕可以快速切換到下載、相機照片、文件等資料夾。想找檔案時，在「篩選」輸入幾個字就好。'], hl: 'local', target: '#paneLocal',
     p: ['左邊是您的電腦，右邊是遠端主機，操作方式完全一樣：點兩下資料夾進去，按「上一層」或鍵盤的 Backspace 回到上一層。',
       '上方的路徑可以直接點選任何一層，也可以按鉛筆圖示輸入路徑。左邊的小房子按鈕可以快速切換桌面、文件、下載和各個磁碟。',
+      '想找檔案時，在右上角的「篩選」輸入幾個字，清單就只顯示符合的檔案。點欄位標題可以依名稱、大小、時間排序。'],
+    mac: ['左邊是您的 Mac，右邊是遠端主機，操作方式完全一樣：點兩下資料夾進去，按「上一層」或鍵盤的 Delete 回到上一層。',
+      '一開始會打開「下載」資料夾。想用其他資料夾，按左邊的小房子按鈕，選「加入其他資料夾…」，在視窗裡選好按「選擇資料夾」；選過的資料夾以後都會出現在這裡。',
       '想找檔案時，在右上角的「篩選」輸入幾個字，清單就只顯示符合的檔案。點欄位標題可以依名稱、大小、時間排序。'] },
   { t: '上傳與下載', mt: '.side-local .go', m: ['上傳：在「本機」畫面點一下要傳的檔案，會出現勾勾，可以一次勾好幾個；再按右上角綠色的「上傳」，就會傳到「遠端」畫面目前的資料夾。', '下載：在「遠端」畫面勾選檔案，按藍色的「下載」，會存到「本機」畫面目前的資料夾。整個資料夾也可以長按勾選後一起傳。'], hl: 'transfer', target: '.side-local .go',
     p: ['最簡單的方法是「拖過去」：把左邊的檔案拖到右邊就是上傳，把右邊的檔案拖到左邊就是下載。整個資料夾也可以一起拖。',
@@ -82,10 +85,13 @@ function art(hl) {
 
 let state = { i: 0, auto: true };
 
-// 手機版用手機的講法（m、mt），不支援的課（mobile: false）略過
+// 手機版用手機的講法（m、mt），不支援的課（mobile: false）略過；App Store 版沒有「更新」、沒有區網分享的版本略過那兩課
+// Mac 上用 Mac 的講法（mac 欄位，其餘由 T() 把 Windows、檔案總管換掉）
 function lessons() {
-  if (!(window.xk && window.xk.mobile)) return LESSONS;
-  return LESSONS.filter((l) => l.mobile !== false && !(window.xk.store && l.target === '#btnUpdate')).map((l) => ({ ...l, p: l.m || l.p, target: 'mt' in l ? l.mt : l.target }));
+  const xk = window.xk || {};
+  const skip = (l) => (xk.store && l.target === '#btnUpdate') || (xk.noShare && l.target === '#btnShare');
+  if (!xk.mobile) return LESSONS.filter((l) => !skip(l)).map((l) => ({ ...l, p: (isMac() && xk.store && l.mac) || l.p.map(T) }));
+  return LESSONS.filter((l) => l.mobile !== false && !skip(l)).map((l) => ({ ...l, p: l.m || l.p, target: 'mt' in l ? l.mt : l.target }));
 }
 
 export function openGuide(start) {
@@ -158,7 +164,8 @@ export function openGuide(start) {
       pic, text, novoice,
       h('div', { class: 'g-ctrl' }, playBtn, showBtn, h('label', { class: 'chk' }, autoChk, '念完自動下一課'), h('span', { class: 'sp' }), prev, next)));
   const m = modal({ title: '使用說明（小柯機器人語音導覽）', body, wide: true, cls: 'guide-modal', onClose: () => { alive = false; stop(); } });
-  if (!voice.available) novoice.textContent = '※ 找不到中文語音，只能看文字。可在 Windows 設定 → 時間與語言 → 語音 新增「中文（台灣）」語音。';
+  if (!voice.available) novoice.textContent = isMac() ? '※ 找不到中文語音，只能看文字。可在 Mac 的「系統設定 → 輔助使用 → 朗讀內容 → 系統聲音」加入「中文（台灣）」語音。'
+    : '※ 找不到中文語音，只能看文字。可在 Windows 設定 → 時間與語言 → 語音 新增「中文（台灣）」語音。';
   else if (!voice.enabled) novoice.textContent = '※ 語音朗讀已在設定中關閉，按「朗讀這一課」仍可播放。';
   goto(state.i, true);
   return m.done;

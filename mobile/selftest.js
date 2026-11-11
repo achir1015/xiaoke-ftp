@@ -1,19 +1,24 @@
-// iOS 模擬器自我測試（只有用 XK_SELFTEST 環境變數啟動時才會載入）：
+// iOS 模擬器／Mac App 自我測試（只有用 XK_SELFTEST 環境變數啟動時才會載入）：
 // 用 window.xk 對每種協定做 連線 → 列表 → 上傳 → 下載 → 比對大小 → 改名 → 刪除，結果 POST 回測試主機
 (async function () {
   const cfg = window.__XK_SELFTEST;
   const out = [];
-  const ok = (c, m) => out.push([!!c, m]);
+  const ok = (c, m) => { out.push([!!c, m]); console.error('[selftest] ' + (c ? '✔ ' : '✘ ') + m); }; // 也寫進 App 的記錄，方便看卡在哪裡
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const report = (extra) => fetch(cfg.report, { method: 'POST', body: JSON.stringify({ results: out, ...extra }) }).catch(() => {});
+  // 網頁的 CSP 只允許連回自己，fetch 可能被擋：結果同時寫進 App 的記錄（Mac 版在 App 容器的 tmp/web.log）
+  const report = (extra) => { console.error('[selftest-report] ' + JSON.stringify({ results: out, ...extra })); return fetch(cfg.report, { method: 'POST', body: JSON.stringify({ results: out, ...extra }) }).catch(() => {}); };
   try {
     for (let i = 0; i < 100 && !document.body.classList.contains('ready'); i++) await sleep(200);
     ok(document.body.classList.contains('ready'), '畫面載入完成');
-    ok(document.documentElement.classList.contains('mobile'), '套用手機版面');
     const xk = window.xk;
+    const mac = xk.platform === 'darwin';
+    if (mac) ok(!document.documentElement.classList.contains('mobile') && document.documentElement.classList.contains('noshare'), '套用電腦版版面（沒有區網分享）');
+    else ok(document.documentElement.classList.contains('mobile'), '套用手機版面');
+    ok(getComputedStyle(document.getElementById('btnUpdate')).display === 'none', 'App Store 版沒有「更新」按鈕');
     const places = await xk.local.places();
-    ok(places.root && places.root.name === '我的檔案', '本機根目錄是「我的檔案」');
-    const dir = places.home + '/selftest';
+    ok(places.root && places.root.name === (mac ? '下載' : '我的檔案'), `本機根目錄是「${mac ? '下載' : '我的檔案'}」`);
+    if (mac) ok(places.places.some((p) => p.grant), '有「加入其他資料夾…」');
+    const dir = places.home + '/xk-selftest';
     await xk.local.delete([dir]).catch(() => {});
     await xk.local.mkdir(dir);
     const big = 'FTP 助手 iOS 測試 '.repeat(20000);

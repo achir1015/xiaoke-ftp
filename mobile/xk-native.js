@@ -49,6 +49,8 @@
   const lsGet = (k, d) => { try { const v = localStorage.getItem('xkftp.' + k); return v ? JSON.parse(v) : d; } catch { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem('xkftp.' + k, JSON.stringify(v)); } catch {} };
   const appInfo = AND ? JSON.parse(AND.appInfo()) : WEB ? WEB.info : (window.XiaokeIOS && window.XiaokeIOS.info) || { platform: 'ios', version: '0' };
+  const MAC = appInfo.platform === 'mac'; // Mac App Store 版：電腦版版面、系統的開啟視窗
+  const MOBILE = !WEB && !appInfo.desktop;
 
   // ---------------- 設定 ----------------
   function defaults() {
@@ -451,15 +453,18 @@
   // ---------------- window.xk ----------------
   let updInfo = null;
   window.xk = {
-    mobile: !WEB,
+    mobile: MOBILE,
     web: !!WEB,
-    store: !!appInfo.store, // App Store 版（iPhone／iPad）：不顯示「更新」，由 App Store 更新
+    platform: MAC ? 'darwin' : appInfo.platform,
+    noShare: true, // 區網分享只有 Electron 電腦版有
+    store: !!appInfo.store, // App Store 版（iPhone／iPad／Mac）：不顯示「更新」，由 App Store 更新
     relay: WEB ? { info: WEB.relayInfo, forgetPassword: WEB.forgetPassword } : undefined,
     tts,
     settings: { get: async () => getSettings(), set: async (p) => setSettings(p) },
-    sys: { info: async () => ({ platform: appInfo.platform, arch: '', version: appInfo.version, packaged: true, profile: '', mobile: !WEB, web: !!WEB, model: appInfo.model || '' }) },
+    sys: { info: async () => ({ platform: appInfo.platform, arch: '', version: appInfo.version, packaged: true, profile: '', mobile: MOBILE, web: !!WEB, model: appInfo.model || '' }) },
     openExternal: (url) => call('openUrl', url),
-    pathForFile: (f) => (WEB ? WEB.pathForFile(f) : ''),
+    // Mac 版：從 Finder 拖進來的檔案，原生程式在拖進視窗時先把路徑放在 window.__xkDropPaths
+    pathForFile: (f) => (WEB ? WEB.pathForFile(f) : MAC ? (window.__xkDropPaths || []).find((p) => p.split('/').pop() === f.name) || '' : ''),
     sites: {
       list: async () => sites().map(publicSite),
       save: (s) => saveSite(s),
@@ -482,7 +487,7 @@
         };
         inp.click();
       }),
-      pickKey: () => picker('選擇 SSH 私鑰檔', '', true),
+      pickKey: MAC ? async () => (await call('d.pickFiles', '選擇 SSH 私鑰檔'))[0] || null : () => picker('選擇 SSH 私鑰檔', '', true),
     },
     remote: {
       open: openRemote,
@@ -509,10 +514,11 @@
       reveal: (p) => call('l.share', p),
       exists: async (p) => !!p && !!(await call('l.stat', p)),
       // iPhone／iPad：從「檔案」或「照片」匯入（Android 直接瀏覽整個手機，不需要）
-      import: IOS || WEB ? (dir, kind) => call('l.import', dir, kind) : undefined,
+      import: (IOS && !MAC) || WEB ? (dir, kind) => call('l.import', dir, kind) : undefined,
       writeText: (p, text) => call('l.writeText', p, text),
     },
-    dialog: { pickFolder: (title, def) => picker(title || '選擇資料夾', def, false), pickFiles: async (title) => { const p = await picker(title || '選擇檔案', '', true); return p ? [p] : []; } },
+    dialog: MAC ? { pickFolder: (title) => call('d.pickFolder', title || '選擇資料夾'), pickFiles: (title) => call('d.pickFiles', title || '選擇檔案') }
+      : { pickFolder: (title, def) => picker(title || '選擇資料夾', def, false), pickFiles: async (title) => { const p = await picker(title || '選擇檔案', '', true); return p ? [p] : []; } },
     queue: {
       add: async (spec) => {
         const s = sess(spec.sid);

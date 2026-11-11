@@ -2,6 +2,14 @@
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
+// Mac 上的說法：Windows → Mac、檔案總管 → Finder、資源回收筒 → 垃圾桶、Ctrl → ⌘
+export const isMac = () => !!(window.xk && window.xk.platform === 'darwin');
+export function T(s) {
+  if (!isMac() || typeof s !== 'string') return s;
+  return s.replace(/Windows 的檔案總管/g, 'Finder').replace(/檔案總管/g, 'Finder').replace(/資源回收筒/g, '垃圾桶')
+    .replace(/Windows 的加密功能/g, 'Mac 的鑰匙圈').replace(/Ctrl 加/g, '⌘ 加').replace(/Windows/g, 'Mac');
+}
+
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs || {})) {

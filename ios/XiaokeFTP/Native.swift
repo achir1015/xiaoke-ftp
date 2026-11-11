@@ -1,11 +1,7 @@
 import Foundation
-import UIKit
 import AVFoundation
 import CryptoKit
 import Security
-import QuickLook
-import PhotosUI
-import UniformTypeIdentifiers
 
 /// 網頁呼叫的原生功能（和 Android 版 Bridge.java 相同的方法名稱）：
 /// 網頁 postMessage({ id, method, args }) → 背景執行 → window.__xkDone(id, { ok, data | error })；事件用 window.__xkEvent(name, data)
@@ -181,19 +177,18 @@ final class Native: NSObject {
         case "l.mkdirs": try fm.createDirectory(atPath: s(0), withIntermediateDirectories: true); return true
         case "l.newFile": if fm.fileExists(atPath: s(0)) { throw XKError("已經有同名的檔案") }; fm.createFile(atPath: s(0), contents: Data()); return true
         case "l.rename": try fm.moveItem(atPath: s(0), toPath: s(1)); return true
-        case "l.delete": for p in (a.first as? [String]) ?? [] { try fm.removeItem(atPath: p) }; return true
+        case "l.delete": try deleteLocal((a.first as? [String]) ?? []); return true
         case "l.walk":
             var files: [[String: Any]] = [], dirs: [String] = []
             walk(URL(fileURLWithPath: s(0)), &files, &dirs)
             return ["files": files, "dirs": dirs]
-        case "l.places":
-            let dl = Self.docs.appendingPathComponent("下載")
-            try? fm.createDirectory(at: dl, withIntermediateDirectories: true)
-            return ["places": [["name": "我的檔案", "path": Self.docs.path, "icon": "home"], ["name": "下載", "path": dl.path, "icon": "down"]],
-                    "drives": [] as [Any], "home": Self.docs.path, "root": ["name": "我的檔案", "path": Self.docs.path]]
+        case "l.places": return places()
         case "l.open": try onMain { self.preview(URL(fileURLWithPath: s(0))) }; return true
         case "l.share": try onMain { self.share(URL(fileURLWithPath: s(0))) }; return true
         case "l.import": return try importFiles(into: s(0), photos: s(1) == "photos")
+        // 選資料夾／檔案（Mac 版用系統的開啟視窗，並記住授權）
+        case "d.pickFolder": return try pickPaths(title: s(0), folders: true)
+        case "d.pickFiles": return try pickPaths(title: s(0), folders: false)
         case "l.readText": return try String(contentsOfFile: s(0), encoding: .utf8)
         case "l.writeText": try s(1).write(toFile: s(0), atomically: true, encoding: .utf8); return s(0)
         case "hash":
@@ -217,10 +212,10 @@ final class Native: NSObject {
         case "secret.enc": return try Keychain.store(s(0))
         case "secret.dec": return Keychain.load(s(0))
         // 其他
-        case "keepAwake": let on = (a.first as? Bool) ?? false; DispatchQueue.main.async { UIApplication.shared.isIdleTimerDisabled = on }; return true
+        case "keepAwake": keepAwake((a.first as? Bool) ?? false); return true
         case "openUrl":
             guard let u = URL(string: s(0)), ["github.com", "achir1015.github.io"].contains(u.host ?? "") else { return false }
-            DispatchQueue.main.async { UIApplication.shared.open(u) }
+            openExternal(u)
             return true
         // App Store 版：新版本由 App Store 更新，App 本身不檢查也不下載
         case "update.check":
@@ -238,87 +233,8 @@ final class Native: NSObject {
         for c in all { c.close() }
     }
 
-    // MARK: 主執行緒的 UI 動作
-    private func onMain(_ fn: @escaping () -> Void) throws { DispatchQueue.main.async(execute: fn) }
-
-    private var previewURL: URL?
-    func preview(_ url: URL) {
-        previewURL = url
-        let q = QLPreviewController()
-        q.dataSource = self
-        web?.present(q)
-    }
-    func share(_ url: URL) {
-        let vc = UIActivityViewController(activityItems: [url], applicationActivities: nil)
-        web?.present(vc)
-    }
-
-    // 從「檔案」或「照片」匯入到目前的資料夾
-    private var importDone: (([URL]) -> Void)?
-    private var importDir = docs
-    func importFiles(into dir: String, photos: Bool) throws -> Int {
-        let sem = DispatchSemaphore(value: 0)
-        var count = 0
-        importDir = URL(fileURLWithPath: dir)
-        DispatchQueue.main.async {
-            self.importDone = { urls in count = urls.count; sem.signal() }
-            if photos {
-                var cfg = PHPickerConfiguration(photoLibrary: .shared())
-                cfg.selectionLimit = 0
-                cfg.preferredAssetRepresentationMode = .current
-                let p = PHPickerViewController(configuration: cfg)
-                p.delegate = self
-                self.web?.present(p)
-            } else {
-                let p = UIDocumentPickerViewController(forOpeningContentTypes: [.item], asCopy: true)
-                p.allowsMultipleSelection = true
-                p.delegate = self
-                self.web?.present(p)
-            }
-        }
-        sem.wait()
-        return count
-    }
-    fileprivate func copyIn(_ src: URL, name: String? = nil) -> URL? {
-        let fm = FileManager.default
-        var dst = importDir.appendingPathComponent(name ?? src.lastPathComponent)
-        var k = 2
-        while fm.fileExists(atPath: dst.path) {
-            let base = (dst.lastPathComponent as NSString).deletingPathExtension, ext = (dst.lastPathComponent as NSString).pathExtension
-            dst = importDir.appendingPathComponent("\(base.replacingOccurrences(of: " (\(k - 1))", with: "")) (\(k))" + (ext.isEmpty ? "" : ".\(ext)"))
-            k += 1
-        }
-        do { try fm.copyItem(at: src, to: dst); return dst } catch { return nil }
-    }
-}
-
-extension Native: QLPreviewControllerDataSource {
-    func numberOfPreviewItems(in c: QLPreviewController) -> Int { previewURL == nil ? 0 : 1 }
-    func previewController(_ c: QLPreviewController, previewItemAt i: Int) -> QLPreviewItem { previewURL! as NSURL }
-}
-
-extension Native: UIDocumentPickerDelegate, PHPickerViewControllerDelegate {
-    func documentPicker(_ c: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        let out = urls.compactMap { copyIn($0) }
-        importDone?(out); importDone = nil
-    }
-    func documentPickerWasCancelled(_ c: UIDocumentPickerViewController) { importDone?([]); importDone = nil }
-    func picker(_ p: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-        p.dismiss(animated: true)
-        let group = DispatchGroup()
-        var out: [URL] = []
-        let l = NSLock()
-        for r in results {
-            let prov = r.itemProvider
-            guard let type = prov.registeredTypeIdentifiers.first(where: { UTType($0)?.conforms(to: .movie) == true || UTType($0)?.conforms(to: .image) == true }) ?? prov.registeredTypeIdentifiers.first else { continue }
-            group.enter()
-            prov.loadFileRepresentation(forTypeIdentifier: type) { url, _ in
-                if let url, let d = self.copyIn(url, name: url.lastPathComponent) { l.lock(); out.append(d); l.unlock() }
-                group.leave()
-            }
-        }
-        group.notify(queue: .global()) { self.importDone?(out); self.importDone = nil }
-    }
+    // MARK: 主執行緒的 UI 動作（preview、share、importFiles 等在 NativeIOS.swift／Mac/NativeMac.swift）
+    func onMain(_ fn: @escaping () -> Void) throws { DispatchQueue.main.async(execute: fn) }
 }
 
 /// 密碼存在鑰匙圈（只存在這台裝置）
@@ -328,7 +244,7 @@ enum Keychain {
         let id = UUID().uuidString
         let q: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "xiaoke-ftp", kSecAttrAccount as String: id,
                                 kSecValueData as String: Data(secret.utf8), kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly]
-        let st = SecItemAdd(q as CFDictionary, nil)
+        let st = SecItemAdd(platformKeychain(q) as CFDictionary, nil)
         if st != errSecSuccess { throw XKError("無法儲存密碼（\(st)）") }
         return "kc:" + id
     }
@@ -336,8 +252,15 @@ enum Keychain {
         guard ref.hasPrefix("kc:") else { return "" }
         let q: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "xiaoke-ftp", kSecAttrAccount as String: String(ref.dropFirst(3)), kSecReturnData as String: true]
         var out: AnyObject?
-        guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess, let d = out as? Data else { return "" }
+        guard SecItemCopyMatching(platformKeychain(q) as CFDictionary, &out) == errSecSuccess, let d = out as? Data else { return "" }
         return String(data: d, encoding: .utf8) ?? ""
+    }
+    private static func platformKeychain(_ q: [String: Any]) -> [String: Any] {
+        #if os(macOS)
+        var q = q; q[kSecUseDataProtectionKeychain as String] = true; return q
+        #else
+        return q
+        #endif
     }
 }
 
@@ -356,7 +279,9 @@ final class Speech: NSObject, AVSpeechSynthesizerDelegate {
         let sem = DispatchSemaphore(value: 0)
         l.lock(); waiting[ObjectIdentifier(u)] = sem; l.unlock()
         DispatchQueue.main.async {
+            #if os(iOS)
             try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+            #endif
             self.syn.speak(u)
         }
         _ = sem.wait(timeout: .now() + 60)

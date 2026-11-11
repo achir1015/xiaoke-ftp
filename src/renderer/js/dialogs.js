@@ -1,5 +1,5 @@
 // 各種對話框：站台編輯、檔案已存在、設定、區網分享、校驗和、版本更新、關於
-import { h, human, dateText } from './util.js';
+import { h, human, dateText, T } from './util.js';
 import { icon } from './icons.js';
 import { modal, toast, field, confirmBox } from './ui.js';
 import { voice } from './voice.js';
@@ -139,7 +139,7 @@ export async function settingsDialog(settings) {
     keepMtime: h('input', { type: 'checkbox', checked: s.keepMtime !== false }),
     showHidden: h('input', { type: 'checkbox', checked: !!s.showHidden }),
     confirmDelete: h('input', { type: 'checkbox', checked: s.confirmDelete !== false }),
-    theme: h('select', {}, ...[['light', '淺色'], ['dark', '深色'], ['system', '跟著 Windows']].map(([v, t]) => h('option', { value: v, selected: s.theme === v }, t))),
+    theme: h('select', {}, ...[['light', '淺色'], ['dark', '深色'], ['system', T('跟著 Windows')]].map(([v, t]) => h('option', { value: v, selected: s.theme === v }, t))),
     voiceOn: h('input', { type: 'checkbox', checked: s.voice.enabled !== false }),
     voiceNotify: h('input', { type: 'checkbox', checked: s.voice.notify !== false }),
     voiceName: h('select', {}, h('option', { value: '' }, '自動（優先台灣中文）'), ...voice.list().map((v) => h('option', { value: v.name, selected: s.voice.name === v.name }, `${v.name}（${v.lang}）`))),
@@ -305,7 +305,7 @@ export function aboutDialog(info) {
     h('img', { src: 'img/logo.png', width: 128, height: 128, alt: '' }),
     h('div', {},
       h('h3', {}, '小柯機器人FTP助手'),
-      h('p', {}, `版本 v${info.version}（${info.platform === 'win32' ? 'Windows' : info.platform === 'darwin' ? 'macOS' : info.platform === 'ios' ? (info.model || 'iPhone／iPad') : info.platform} ${info.arch}）`),
+      h('p', {}, `版本 v${info.version}（${info.platform === 'win32' ? 'Windows' : info.platform === 'darwin' || info.platform === 'mac' ? 'macOS' : info.platform === 'ios' ? (info.model || 'iPhone／iPad') : info.platform} ${info.arch}）`),
       window.xk.store ? h('p', { class: 'hint' }, '新版本會由 App Store 自動更新。') : null,
       h('p', {}, '開發：吳玉柱 先生 與 Claude AI Opus 5.5'),
       h('p', { class: 'hint' }, '支援 FTP、FTPS、SFTP、WebDAV 的雙窗格檔案管理工具：拖放上傳下載、續傳、限速、站台管理、線上編輯、區網分享、校驗和、語音說明。介面設計參考 FileCentipede 的檔案瀏覽器理念，程式完全自行撰寫。'),
