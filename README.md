@@ -21,10 +21,14 @@ https://github.com/user-attachments/assets/32699b96-3edc-4047-ae67-24b03e51dae6
 | MacBook（Apple 晶片） | `XiaokeFTP-版本-mac-arm64.dmg` |
 | Mac（Intel） | `XiaokeFTP-版本-mac-x64.dmg` |
 | Android 手機（8 以上） | `XiaokeFTP-版本-android.apk` |
-| iPad／iPhone | 用 Safari 開 [安裝頁](https://achir1015.github.io/xiaoke-ftp/ios/)（限已登記的裝置） |
+| iPad／iPhone | **[App Store 免費下載](https://apps.apple.com/tw/app/id6833313649)**（iOS 17 以上，由 App Store 自動更新） |
 | 線上版（免安裝） | 用瀏覽器打開 https://achir1015.github.io/xiaoke-ftp/ |
 
-裝好之後程式會自動檢查新版本，按一下就能更新。
+裝好之後程式會自動檢查新版本，按一下就能更新（App Store 版由 App Store 更新）。
+
+**iPad／iPhone**：按上面的連結，或在電腦上用 iPad／iPhone 相機掃這個 QR Code 打開 App Store，按「取得」。之前用 [安裝頁](https://achir1015.github.io/xiaoke-ftp/ios/) .ipa 裝的人，請刪掉舊 App 改裝 App Store 版（站台要重新建立）。
+
+<img src="docs/ios/appstore-qr.png" width="180" alt="iPad／iPhone 掃描打開 App Store">
 
 **Android**：第一次安裝要允許「安裝不明應用程式」；開啟後請允許「所有檔案存取權」，才能讀寫手機裡的檔案。手機版暫不提供線上編輯與區網分享。
 
@@ -62,7 +66,7 @@ python android/build.py           # 打包 Android APK（需要 JDK 17、Android
 python android/build.py debug install   # 除錯版裝到手機，可跑 node e2e/phone.mjs 實機測試
 ```
 
-iPad／iPhone 版在 `ios/`（XcodeGen；Mac 上執行 `bash ios/build-ipa.sh` 產生 Ad Hoc .ipa），連線由 Swift 負責：FTP／FTPS 自行實作、SFTP 用 [Citadel](https://github.com/orlandos-nl/Citadel)（MIT）、WebDAV 用 URLSession。
+iPad／iPhone 版在 `ios/`（XcodeGen；Mac 上執行 `bash ios/build-ipa.sh` 產生 Ad Hoc .ipa，`bash ios/build-appstore.sh` 封存 App Store 版、加 `mac` 封存 Mac App Store 版），連線由 Swift 負責：FTP／FTPS 自行實作、SFTP 用 [Citadel](https://github.com/orlandos-nl/Citadel)（MIT）、WebDAV 用 URLSession。
 
 Android 版的畫面和電腦版是同一份程式（`scripts/build-mobile.mjs` 產生 `mobile/www`），連線由原生 Java 負責：FTP／FTPS 用 [Apache Commons Net](https://commons.apache.org/proper/commons-net/)（Apache 2.0）、SFTP 用 [JSch](https://github.com/mwiede/jsch)（BSD）、WebDAV 自行實作。
 
